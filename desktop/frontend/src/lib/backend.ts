@@ -2,7 +2,7 @@ import * as ApplicationService from "../../bindings/github.com/Sneypsleep90/carv
 import { Events } from "@wailsio/runtime";
 import { DeploymentProgress } from "../../bindings/events";
 import type { ApplicationState } from "../../bindings/github.com/Sneypsleep90/carvion/desktop/models";
-import { AdapterStatus, DeploymentRequest } from "../../bindings/github.com/Sneypsleep90/carvion/internal/core/domain/models";
+import { AdapterStatus } from "../../bindings/github.com/Sneypsleep90/carvion/internal/core/domain/models";
 import type {
   AdapterInfo,
   CompatibilityRequest,
@@ -107,7 +107,7 @@ export const desktopBackend: DesktopBackend = {
   importGeelyLocalizationProject: (request) => ApplicationService.ImportGeelyLocalizationProject(request),
   buildGeelyDiagnosticReport: (request) => ApplicationService.BuildGeelyDiagnosticReport(request),
   listDeploymentJobs: async (limit) => (await ApplicationService.ListDeploymentJobs(limit)) ?? [],
-  startDeploymentJob: (request) => ApplicationService.StartDeploymentJob(new DeploymentRequest(request)),
+  startDeploymentJob: (request) => ApplicationService.StartDeploymentJob(request),
   getDeploymentJob: (jobID) => ApplicationService.GetDeploymentJob(jobID),
   cancelDeploymentJob: (jobID) => ApplicationService.CancelDeploymentJob(jobID),
   onDeploymentProgress: (listener) => Events.On(DeploymentProgress, (event) => listener(event.data)),

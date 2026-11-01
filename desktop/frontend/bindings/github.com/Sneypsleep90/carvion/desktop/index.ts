@@ -6,6 +6,6 @@ export {
     ApplicationService
 };
 
-export {
+export type {
     ApplicationState
 } from "./models.js";

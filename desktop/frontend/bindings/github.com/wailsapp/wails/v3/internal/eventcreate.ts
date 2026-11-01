@@ -6,17 +6,4 @@
 // @ts-ignore: Unused imports
 import { Create as $Create } from "@wailsio/runtime";
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore: Unused imports
-import * as domain$0 from "../../../../Sneypsleep90/carvion/internal/core/domain/models.js";
-
-function configure() {
-    Object.freeze(Object.assign($Create.Events, {
-        "deployment:progress": $$createType0,
-    }));
-}
-
-// Private type creation functions
-const $$createType0 = domain$0.DeploymentEvent.createFrom;
-
-configure();
+Object.freeze($Create.Events);

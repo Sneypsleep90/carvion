@@ -184,13 +184,13 @@ export function DeploymentPage({ backend }: DeploymentPageProps) {
       <Card>
         <CardHeader>
           <div><CardTitle>Предварительные проверки</CardTitle><p className="mt-1.5 text-xs text-muted">Результаты относятся к выбранной задаче. Целостность пакета не подтверждает его подлинность.</p></div>
-          <Badge variant="neutral">{job ? labelForState(job.state, job.mode, job.preflight.checks) : "ОЖИДАНИЕ"}</Badge>
+          <Badge variant="neutral">{job ? labelForState(job.state, job.mode, job.preflight.checks ?? []) : "ОЖИДАНИЕ"}</Badge>
         </CardHeader>
         <CardContent className="space-y-4 pt-5">
           {job ? (
             <>
               <div role="status" aria-live="polite" className="rounded-xl border border-line bg-canvas/35 p-3.5">
-                <p className="text-sm font-semibold text-copy">{labelForState(job.state, job.mode, job.preflight.checks)}</p>
+                <p className="text-sm font-semibold text-copy">{labelForState(job.state, job.mode, job.preflight.checks ?? [])}</p>
                 <p className="mt-1.5 text-xs leading-5 text-muted">{job.state === DeploymentState.DeploymentStateSimulated ? "Только симуляция; автомобиль не изменён" : job.errorMessage || job.events?.[job.events.length - 1]?.message || "Задача создана; ожидание события от Go Core."}</p>
                 <p className="mt-2 break-all font-mono text-[9px] text-faint">Job {job.id} · SHA-256 {job.packageSha256}</p>
               </div>
