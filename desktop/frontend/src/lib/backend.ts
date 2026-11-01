@@ -1,6 +1,8 @@
 import * as ApplicationService from "../../bindings/github.com/Sneypsleep90/carvion/desktop/applicationservice";
+import { Events } from "@wailsio/runtime";
+import { DeploymentProgress } from "../../bindings/events";
 import type { ApplicationState } from "../../bindings/github.com/Sneypsleep90/carvion/desktop/models";
-import { AdapterStatus } from "../../bindings/github.com/Sneypsleep90/carvion/internal/core/domain/models";
+import { AdapterStatus, DeploymentRequest } from "../../bindings/github.com/Sneypsleep90/carvion/internal/core/domain/models";
 import type {
   AdapterInfo,
   CompatibilityRequest,
@@ -28,6 +30,11 @@ import type {
   ResourceInspection,
   VehicleIdentity,
   VehicleModel,
+	DeploymentEvent,
+	DeploymentJob,
+	DeploymentJobSummary,
+	DeploymentMode,
+	DeploymentRequest as DeploymentRequestModel,
 } from "../../bindings/github.com/Sneypsleep90/carvion/internal/core/domain/models";
 
 export type DesktopBackend = Readonly<{
@@ -40,6 +47,7 @@ export type DesktopBackend = Readonly<{
   detectVehicle: (adapterID: string, identity: VehicleIdentity) => Promise<DetectionResult>;
   inspectResources: (adapterID: string, request: InspectResourcesRequest) => Promise<ResourceInspection>;
   listLocalizationProjects: () => Promise<ReadonlyArray<LocalizationProjectSummary>>;
+  listDeploymentProjects: () => Promise<ReadonlyArray<LocalizationProjectSummary>>;
   getLocalizationProject: (projectID: string) => Promise<LocalizationProject>;
   replaceLocalizationSource: (projectID: string, filename: string, content: string) => Promise<LocalizationProject>;
   importLocalizationProject: (name: string, locale: string, format: LocalizationFormat, filename: string, content: string) => Promise<LocalizationProject>;
@@ -58,6 +66,11 @@ export type DesktopBackend = Readonly<{
   inspectGeelyResources: (request: GeelyResourceRequest) => Promise<ResourceInspection>;
   importGeelyLocalizationProject: (request: GeelyLocalizationImportRequest) => Promise<GeelyLocalizationImportResult>;
   buildGeelyDiagnosticReport: (request: GeelyDiagnosticReportRequest) => Promise<GeelyDiagnosticReport>;
+  listDeploymentJobs: (limit: number) => Promise<ReadonlyArray<DeploymentJobSummary>>;
+  startDeploymentJob: (request: DeploymentRequestModel) => Promise<DeploymentJob>;
+  getDeploymentJob: (jobID: string) => Promise<DeploymentJob>;
+  cancelDeploymentJob: (jobID: string) => Promise<DeploymentJob>;
+  onDeploymentProgress: (listener: (event: DeploymentEvent) => void) => () => void;
 }>;
 
 export const desktopBackend: DesktopBackend = {
@@ -71,6 +84,7 @@ export const desktopBackend: DesktopBackend = {
   detectVehicle: (adapterID, identity) => ApplicationService.DetectVehicle(adapterID, identity),
   inspectResources: (adapterID, request) => ApplicationService.InspectResources(adapterID, request),
   listLocalizationProjects: async () => (await ApplicationService.ListLocalizationProjects()) ?? [],
+  listDeploymentProjects: async () => (await ApplicationService.ListLocalizationProjects()) ?? [],
   getLocalizationProject: (projectID) => ApplicationService.GetLocalizationProject(projectID),
   replaceLocalizationSource: (projectID, filename, content) => ApplicationService.ReplaceLocalizationSource(projectID, filename, content),
   importLocalizationProject: (name, locale, format, filename, content) =>
@@ -92,6 +106,11 @@ export const desktopBackend: DesktopBackend = {
   inspectGeelyResources: (request) => ApplicationService.InspectGeelyResources(request),
   importGeelyLocalizationProject: (request) => ApplicationService.ImportGeelyLocalizationProject(request),
   buildGeelyDiagnosticReport: (request) => ApplicationService.BuildGeelyDiagnosticReport(request),
+  listDeploymentJobs: async (limit) => (await ApplicationService.ListDeploymentJobs(limit)) ?? [],
+  startDeploymentJob: (request) => ApplicationService.StartDeploymentJob(new DeploymentRequest(request)),
+  getDeploymentJob: (jobID) => ApplicationService.GetDeploymentJob(jobID),
+  cancelDeploymentJob: (jobID) => ApplicationService.CancelDeploymentJob(jobID),
+  onDeploymentProgress: (listener) => Events.On(DeploymentProgress, (event) => listener(event.data)),
 };
 
 export type {
@@ -122,6 +141,11 @@ export type {
   SimulatorRunResult,
   VehicleIdentity,
   VehicleModel,
+  DeploymentEvent,
+  DeploymentJob,
+  DeploymentJobSummary,
+  DeploymentMode,
+  DeploymentRequestModel,
 };
 
 export { AdapterStatus };

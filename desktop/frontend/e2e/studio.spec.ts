@@ -220,3 +220,75 @@ test("cancels an active simulator run and shows its final event", async ({ page 
   await expect(page.getByText("scenario.cancelled", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Скачать языковой пакет" })).toHaveCount(0);
 });
+
+test("blocks Production mode and records why readiness is unknown", async ({ page }) => {
+  await page.goto("/e2e.html");
+  await page.getByRole("button", { name: "Развёртывание", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "Развёртывание" })).toBeVisible();
+  await expect(page.getByText("Production Mode заблокирован в Go Core", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Проверить Production readiness" }).click();
+
+  await expect(page.getByRole("status")).toContainText("Production заблокирован");
+  await expect(page.getByText("Подтверждённая целевая платформа", { exact: true })).toBeVisible();
+  await expect(page.getByText("Подтверждённый способ установки", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /установку/i })).toHaveCount(0);
+});
+
+test("runs a synthetic deployment check and restores the saved job from history", async ({ page }) => {
+  await page.goto("/e2e.html");
+  await page.getByRole("button", { name: "Развёртывание", exact: true }).click();
+
+  await page.getByLabel("Проект локализации").selectOption("e2e-approved-project");
+  await page.getByLabel("Синтетический профиль").selectOption("demo-android-platform-a");
+  await page.getByRole("button", { name: "Запустить тестовый прогон" }).click();
+
+  await expect(page.getByRole("status")).toContainText("Симуляция завершена");
+  await expect(page.getByText("Только симуляция; автомобиль не изменён", { exact: true })).toBeVisible();
+  await expect(page.getByRole("list", { name: "События развёртывания" }).getByText("simulation.completed", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Обновить историю" }).click();
+  await expect(page.getByRole("list", { name: "История развёртываний" }).getByText("simulated", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Адаптеры", exact: true }).click();
+  await page.getByRole("button", { name: "Развёртывание", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Симуляция завершена");
+});
+
+test("stops on invalid package integrity before synthetic simulation", async ({ page }) => {
+  await page.goto("/e2e.html");
+  await page.getByRole("button", { name: "Развёртывание", exact: true }).click();
+
+  await page.getByLabel("Проект локализации").selectOption("e2e-invalid-package");
+  await page.getByLabel("Синтетический профиль").selectOption("demo-android-platform-a");
+  await page.getByRole("button", { name: "Запустить тестовый прогон" }).click();
+
+  await expect(page.getByRole("status")).toContainText("Проверка целостности пакета завершилась ошибкой");
+  await expect(page.getByText("Пакет не прошёл проверку; симуляция не запускалась.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("list", { name: "События развёртывания" }).getByText("simulation.started", { exact: true })).toHaveCount(0);
+});
+
+test("cancels an active synthetic deployment check", async ({ page }) => {
+  await page.goto("/e2e.html");
+  await page.getByRole("button", { name: "Развёртывание", exact: true }).click();
+
+  await page.getByLabel("Проект локализации").selectOption("e2e-approved-project");
+  await page.getByLabel("Синтетический профиль").selectOption("demo-android-platform-b");
+  await page.getByRole("button", { name: "Запустить тестовый прогон" }).click();
+  await page.getByRole("button", { name: "Отменить тестовый прогон" }).click();
+
+  await expect(page.getByRole("status")).toContainText("Тестовый прогон отменён");
+  await expect(page.getByRole("list", { name: "События развёртывания" }).getByText("deployment.cancelled", { exact: true })).toBeVisible();
+});
+
+test("shows a synthetic provider RPC failure without claiming a successful result", async ({ page }) => {
+  await page.goto("/e2e.html");
+  await page.getByRole("button", { name: "Развёртывание", exact: true }).click();
+
+  await page.getByLabel("Проект локализации").selectOption("e2e-provider-failure");
+  await page.getByLabel("Синтетический профиль").selectOption("demo-android-platform-a");
+  await page.getByRole("button", { name: "Запустить тестовый прогон" }).click();
+
+  await expect(page.getByRole("status")).toContainText("Тестовый прогон завершился с ошибкой");
+  await expect(page.getByRole("list", { name: "События развёртывания" }).getByText("provider.failed", { exact: true })).toBeVisible();
+  await expect(page.getByText("Только симуляция; автомобиль не изменён", { exact: true })).toHaveCount(0);
+});

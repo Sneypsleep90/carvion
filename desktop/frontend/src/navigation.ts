@@ -9,6 +9,7 @@ import {
   Waypoints,
   Settings2,
   SearchCode,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -21,6 +22,7 @@ export type SectionId =
   | "adapters"
   | "geely-research"
   | "simulator"
+  | "deployment"
   | "history"
   | "settings";
 
@@ -36,6 +38,7 @@ export const navigationGroups: ReadonlyArray<Readonly<{ label: string; items: Re
       { id: "localization", label: "Локализация", icon: Languages },
       { id: "language-packages", label: "Языковые пакеты", icon: PackageOpen },
       { id: "simulator", label: "Симулятор", icon: Waypoints },
+      { id: "deployment", label: "Развёртывание", icon: ShieldCheck },
     ],
   },
   {
@@ -58,6 +61,7 @@ export const sectionTitles: Readonly<Record<SectionId, string>> = {
   adapters: "Адаптеры",
   "geely-research": "Исследование Geely",
   simulator: "Симулятор",
+  deployment: "Развёртывание",
   history: "История операций",
   settings: "Настройки",
 };
@@ -71,6 +75,7 @@ export const sectionDescription: Readonly<Record<SectionId, string>> = {
   adapters: "Доверенные локальные процессы, обнаруженные Go Core.",
   "geely-research": "Импорт локальных профилей и ресурсов; неизвестные конфигурации остаются unknown.",
   simulator: "Полный тестовый цикл CARVION без подключения к автомобилю.",
+  deployment: "Проверка пакета и симуляция; Production Mode заблокирован в Go Core.",
   history: "Журнал операций появится вместе с workflow проекта.",
   settings: "Сведения о текущем локальном запуске.",
 };

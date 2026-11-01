@@ -6,6 +6,7 @@ import { Sidebar } from "./components/sidebar";
 import { Topbar } from "./components/topbar";
 import { AdaptersPage } from "./features/adapters-page";
 import { DashboardPage } from "./features/dashboard-page";
+import { DeploymentPage } from "./features/deployment-page";
 import { DiagnosticsPage } from "./features/diagnostics-page";
 import { GeelyResearchPage } from "./features/geely-research-page";
 import { LocalizationPage } from "./features/localization-page";
@@ -99,6 +100,8 @@ export default function App({ backend }: AppProps) {
         return <GeelyResearchPage backend={backend} onOpenLocalization={(projectID) => { setInitialLocalizationProjectID(projectID); setSection("localization"); }} />;
       case "simulator":
         return <SimulatorPage backend={backend} />;
+      case "deployment":
+        return <DeploymentPage backend={backend} />;
       case "history":
         return <OperationHistoryPage />;
       case "settings":

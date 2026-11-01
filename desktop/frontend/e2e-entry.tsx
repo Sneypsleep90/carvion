@@ -2,11 +2,37 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./src/App";
 import type { DesktopBackend } from "./src/lib/backend";
-import { AdapterStatus, CompatibilityStatus, LocalizationResourceKind, SimulatorRunStatus, TranslationStatus, type LocalizationProject, type SimulatorProfile, type SimulatorRunResult } from "./bindings/github.com/Sneypsleep90/carvion/internal/core/domain/models";
+import {
+  AdapterStatus,
+  CompatibilityStatus,
+  DeploymentCheckStatus,
+  DeploymentMode,
+  DeploymentState,
+  LocalizationFormat,
+  LocalizationResourceKind,
+  SimulatorRunStatus,
+  TranslationStatus,
+  type DeploymentEvent,
+  type DeploymentJob,
+  type DeploymentRequest,
+  type LocalizationProject,
+  type LocalizationProjectSummary,
+  type SimulatorProfile,
+  type SimulatorRunResult,
+} from "./bindings/github.com/Sneypsleep90/carvion/internal/core/domain/models";
 import "./src/index.css";
 
 let localizationProject: LocalizationProject | null = null;
 const cancelledSimulatorRequests = new Set<string>();
+const deploymentJobs = new Map<string, DeploymentJob>();
+const deploymentListeners = new Set<(event: DeploymentEvent) => void>();
+const cancelledDeploymentJobs = new Set<string>();
+let nextDeploymentJobID = 1;
+const deploymentProjects: ReadonlyArray<LocalizationProjectSummary> = [
+  { id: "e2e-approved-project", name: "E2E · Synthetic approved localization", locale: "ru-RU", format: LocalizationFormat.LocalizationFormatAndroidXML, filename: "e2e-approved-strings.xml", sourceSha256: "e2e-source-sha256" },
+  { id: "e2e-invalid-package", name: "E2E · Package integrity failure fixture", locale: "ru-RU", format: LocalizationFormat.LocalizationFormatAndroidXML, filename: "e2e-invalid-package.xml", sourceSha256: "e2e-invalid-source-sha256" },
+  { id: "e2e-provider-failure", name: "E2E · Synthetic provider failure fixture", locale: "ru-RU", format: LocalizationFormat.LocalizationFormatAndroidXML, filename: "e2e-provider-failure.xml", sourceSha256: "e2e-provider-failure-source-sha256" },
+];
 
 const geelyProfileFields = (profileJSON: string) => {
   const profile = JSON.parse(profileJSON) as {
@@ -89,6 +115,97 @@ const simulatorProfiles: ReadonlyArray<SimulatorProfile> = [
   },
 ];
 
+function publishDeploymentEvent(
+  job: DeploymentJob,
+  state: DeploymentState,
+  stage: string,
+  message: string,
+  patch: Partial<DeploymentJob> = {},
+): DeploymentJob {
+  const event: DeploymentEvent = {
+    jobId: job.id,
+    sequence: (job.events?.length ?? 0) + 1,
+    at: new Date().toISOString(),
+    state,
+    stage,
+    message,
+  };
+  const updated: DeploymentJob = {
+    ...job,
+    ...patch,
+    state,
+    events: [...(job.events ?? []), event],
+    updatedAt: event.at,
+  };
+  deploymentJobs.set(job.id, updated);
+  for (const listener of deploymentListeners) listener(event);
+  return updated;
+}
+
+async function runDeploymentFixture(jobID: string) {
+  let job = deploymentJobs.get(jobID);
+  if (!job) return;
+  const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 180));
+  job = publishDeploymentEvent(job, DeploymentState.DeploymentStatePreflighting, "preflight.started", "Сохраненная задача перешла к предварительным проверкам.");
+  await pause();
+  if (cancelledDeploymentJobs.has(jobID)) return;
+
+  if (job.mode === DeploymentMode.DeploymentModeProduction) {
+    const checks = [
+      { id: "package-integrity", status: DeploymentCheckStatus.DeploymentCheckPassed, required: true, message: "Структура и SHA-256 пакета проверены." },
+      { id: "target-profile", status: DeploymentCheckStatus.DeploymentCheckBlocked, required: true, message: "Подтверждённая целевая платформа отсутствует." },
+      { id: "compatibility", status: DeploymentCheckStatus.DeploymentCheckUnknown, required: true, message: "Точной проверенной записи совместимости нет." },
+      { id: "installation-capability", status: DeploymentCheckStatus.DeploymentCheckBlocked, required: true, message: "Подтверждённый способ установки не описан." },
+      { id: "result-verification", status: DeploymentCheckStatus.DeploymentCheckBlocked, required: true, message: "Критерии проверки результата на автомобиле отсутствуют." },
+      { id: "recovery-capability", status: DeploymentCheckStatus.DeploymentCheckBlocked, required: true, message: "Подтверждённая процедура восстановления отсутствует." },
+      { id: "bench-evidence", status: DeploymentCheckStatus.DeploymentCheckBlocked, required: true, message: "Результаты стендовых испытаний отсутствуют." },
+      { id: "production-policy", status: DeploymentCheckStatus.DeploymentCheckBlocked, required: true, message: "Production Mode запрещён политикой Go Core." },
+    ];
+    publishDeploymentEvent(job, DeploymentState.DeploymentStateBlocked, "preflight.blocked", "Production Mode заблокирован политикой Go Core.", { preflight: { ready: false, checks } });
+    return;
+  }
+
+  if (job.projectId === "e2e-invalid-package") {
+    const checks = [{ id: "package-integrity", status: DeploymentCheckStatus.DeploymentCheckFailed, required: true, message: "Синтетическая E2E фикстура содержит несовпадающий SHA-256." }];
+    publishDeploymentEvent(job, DeploymentState.DeploymentStateFailed, "package-integrity.failed", "Проверка целостности пакета завершилась ошибкой.", {
+      preflight: { ready: false, checks }, errorMessage: "Пакет не прошёл проверку; симуляция не запускалась.",
+    });
+    return;
+  }
+
+  const passedChecks = [
+    { id: "package-integrity", status: DeploymentCheckStatus.DeploymentCheckPassed, required: true, message: "Тестовый пакет прошёл structural и SHA-256 проверки." },
+    { id: "target-profile", status: DeploymentCheckStatus.DeploymentCheckPassed, required: true, message: "Профиль выбран из синтетического каталога." },
+    { id: "compatibility", status: DeploymentCheckStatus.DeploymentCheckPassed, required: true, message: "Точная совместимость подтверждена только для синтетической фикстуры." },
+    { id: "provider-capability", status: DeploymentCheckStatus.DeploymentCheckPassed, required: true, message: "Provider поддерживает только симуляцию и не умеет устанавливать пакет." },
+    { id: "result-verification", status: DeploymentCheckStatus.DeploymentCheckPassed, required: true, message: "Синтетическая проверка результата доступна." },
+    { id: "recovery-capability", status: DeploymentCheckStatus.DeploymentCheckPassed, required: true, message: "Синтетическая проверка восстановления доступна." },
+  ];
+  job = publishDeploymentEvent(job, DeploymentState.DeploymentStatePreflightPassed, "preflight.passed", "Предварительные проверки синтетического сценария пройдены.", { preflight: { ready: true, checks: passedChecks } });
+  await pause();
+  if (cancelledDeploymentJobs.has(jobID)) return;
+  job = publishDeploymentEvent(job, DeploymentState.DeploymentStateSimulating, "simulation.started", "Запущена локальная симуляция; оборудование не используется.");
+  await pause();
+  if (cancelledDeploymentJobs.has(jobID)) return;
+
+  if (job.projectId === "e2e-provider-failure") {
+    publishDeploymentEvent(job, DeploymentState.DeploymentStateFailed, "provider.failed", "Синтетический provider вернул контролируемую ошибку RPC.", {
+      errorMessage: "Контролируемая ошибка RPC синтетического provider.",
+      recovery: { available: true, simulated: true, message: "Проверка восстановления выполнена только в синтетическом сценарии." },
+    });
+    return;
+  }
+
+  job = publishDeploymentEvent(job, DeploymentState.DeploymentStateVerifying, "result-verification.started", "Проверяется результат симуляции.", {
+    recovery: { available: true, simulated: true, message: "Синтетическая проверка восстановления; откат устройства не выполнялся." },
+  });
+  await pause();
+  if (cancelledDeploymentJobs.has(jobID)) return;
+  publishDeploymentEvent(job, DeploymentState.DeploymentStateSimulated, "simulation.completed", "Симуляция завершена; автомобиль не изменён.", {
+    resultVerification: { verified: true, simulated: true, message: "Синтетический результат проверен; автомобиль не изменён." },
+  });
+}
+
 const backend: DesktopBackend = {
   getApplicationState: async () => ({
     version: "0.1.0",
@@ -151,6 +268,7 @@ const backend: DesktopBackend = {
     filename: localizationProject.filename,
     sourceSha256: localizationProject.sourceSha256,
   }] : [],
+  listDeploymentProjects: async () => deploymentProjects,
   getLocalizationProject: async (projectID) => {
     if (!localizationProject || localizationProject.id !== projectID) throw new Error("localization project not found");
     return localizationProject;
@@ -278,6 +396,53 @@ const backend: DesktopBackend = {
       filename: "carvion-geely-diagnostic-report.json",
       content: JSON.stringify({ schema: "test-report-only", profile, compatibility: geelyAnalysis(request.profileJson).compatibility, ...(resource ? { resource } : {}) }, null, 2),
     };
+  },
+  listDeploymentJobs: async (limit) => [...deploymentJobs.values()]
+    .sort((left, right) => (right.createdAt ?? "").localeCompare(left.createdAt ?? ""))
+    .slice(0, limit)
+    .map(({ id, projectId, targetProfileId, mode, packageSha256, state, createdAt, updatedAt }) => ({
+      id, projectId, ...(targetProfileId ? { targetProfileId } : {}), mode, packageSha256, state,
+      createdAt: createdAt ?? "", updatedAt: updatedAt ?? "",
+    })),
+  startDeploymentJob: async (request: DeploymentRequest) => {
+    const now = new Date().toISOString();
+    const id = `e2e-deployment-${nextDeploymentJobID++}`;
+    const job: DeploymentJob = {
+      id,
+      projectId: request.projectId,
+      ...(request.targetProfileId ? { targetProfileId: request.targetProfileId } : {}),
+      mode: request.mode,
+      ...(request.mode === DeploymentMode.DeploymentModeTest ? { providerId: "e2e-synthetic-provider" } : {}),
+      packageSha256: `e2e-package-${id}`,
+      state: DeploymentState.DeploymentStateQueued,
+      preflight: { ready: false, checks: [] },
+      resultVerification: { verified: false, simulated: false, message: "" },
+      recovery: { available: false, simulated: false, message: "" },
+      events: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+    deploymentJobs.set(id, job);
+    void runDeploymentFixture(id);
+    return job;
+  },
+  getDeploymentJob: async (jobID) => {
+    const job = deploymentJobs.get(jobID);
+    if (!job) throw new Error("deployment job not found");
+    return job;
+  },
+  cancelDeploymentJob: async (jobID) => {
+    const job = deploymentJobs.get(jobID);
+    if (!job) throw new Error("deployment job not found");
+    if (![DeploymentState.DeploymentStateBlocked, DeploymentState.DeploymentStateSimulated, DeploymentState.DeploymentStateFailed, DeploymentState.DeploymentStateCancelled].includes(job.state)) {
+      cancelledDeploymentJobs.add(jobID);
+      return publishDeploymentEvent(job, DeploymentState.DeploymentStateCancelled, "deployment.cancelled", "Тестовый прогон отменён пользователем; автомобиль не изменён.", { errorMessage: "Тестовый прогон отменён пользователем." });
+    }
+    return job;
+  },
+  onDeploymentProgress: (listener) => {
+    deploymentListeners.add(listener);
+    return () => deploymentListeners.delete(listener);
   },
 };
 
