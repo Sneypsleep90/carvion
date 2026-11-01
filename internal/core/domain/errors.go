@@ -11,6 +11,7 @@ var (
 	ErrAdapterTimeout              = errors.New("adapter call timed out")
 	ErrCatalogUnavailable          = errors.New("catalog is unavailable")
 	ErrLocalizationProjectNotFound = errors.New("localization project not found")
+	ErrLocalizationPackageNotFound = errors.New("localization package not found")
 	ErrLocalizationUnavailable     = errors.New("localization storage is unavailable")
 	ErrDeploymentJobNotFound       = errors.New("deployment job not found")
 	ErrDeploymentStateConflict     = errors.New("deployment job state conflict")

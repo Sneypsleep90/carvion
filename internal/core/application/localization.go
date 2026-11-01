@@ -23,6 +23,7 @@ type LocalizationRepository interface {
 	SaveLocalizationTranslations(context.Context, string, []domain.LocalizationTranslation) error
 	SaveLocalizationValidation(context.Context, string, domain.LocalizationValidationReport) (string, error)
 	SaveLocalizationPackage(context.Context, string, domain.LocalizationPackage, string, []byte) (domain.LocalizationPackage, error)
+	GetLocalizationPackage(context.Context, string, string) ([]byte, error)
 }
 
 type LocalizationService struct {
@@ -390,6 +391,19 @@ func (s *LocalizationService) BuildLanguagePackage(ctx context.Context, projectI
 	}
 	item := domain.LocalizationPackage{Filename: project.Name + "-" + project.Locale + ".carvion.zip", SHA256: hash, Size: len(content), ContentBase64: base64.StdEncoding.EncodeToString(content)}
 	return s.repository.SaveLocalizationPackage(ctx, projectID, item, reportID, content)
+}
+
+func (s *LocalizationService) GetPackageContent(ctx context.Context, projectID, packageSHA256 string) ([]byte, error) {
+	if err := contextError(ctx); err != nil {
+		return nil, err
+	}
+	if err := validateField("project_id", projectID); err != nil {
+		return nil, err
+	}
+	if err := validateField("package_sha256", packageSHA256); err != nil {
+		return nil, err
+	}
+	return s.repository.GetLocalizationPackage(ctx, projectID, packageSHA256)
 }
 
 func findResource(resources []domain.LocalizationResource, key string) (domain.LocalizationResource, bool) {

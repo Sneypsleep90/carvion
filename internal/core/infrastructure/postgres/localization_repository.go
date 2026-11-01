@@ -350,6 +350,22 @@ func (r *LocalizationRepository) SaveLocalizationPackage(ctx context.Context, pr
 	return item, nil
 }
 
+func (r *LocalizationRepository) GetLocalizationPackage(ctx context.Context, projectID, packageSHA256 string) ([]byte, error) {
+	var artifact []byte
+	err := r.pool.QueryRow(ctx, `
+		SELECT artifact FROM language_packages
+		WHERE project_id = $1::uuid AND sha256 = $2
+		ORDER BY created_at DESC, id DESC LIMIT 1`, projectID, packageSHA256,
+	).Scan(&artifact)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, domain.ErrLocalizationPackageNotFound
+	}
+	if err != nil {
+		return nil, localizationDBError(ctx, "get language package", err)
+	}
+	return artifact, nil
+}
+
 func (r *LocalizationRepository) listLocalizationResources(ctx context.Context, projectID string) ([]domain.LocalizationResource, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT resource_key, COALESCE(group_key, ''), resource_kind, source_text, source_sha256,

@@ -24,3 +24,17 @@ type DeploymentProvider interface {
 	VerifyResult(context.Context, domain.DeploymentJob, string) (domain.DeploymentResultVerification, error)
 	CheckRecovery(context.Context, domain.DeploymentJob) (domain.RecoveryCapabilityResult, error)
 }
+
+type DeploymentPackageVerifier interface {
+	VerifyLanguagePackage([]byte, string) error
+}
+
+type DeploymentRepository interface {
+	CreateDeploymentJob(context.Context, domain.DeploymentJob) (domain.DeploymentJob, error)
+	TransitionDeploymentJob(context.Context, domain.DeploymentJob, domain.DeploymentEvent) error
+	AppendDeploymentEvent(context.Context, string, domain.DeploymentState, domain.DeploymentEvent) (domain.DeploymentEvent, error)
+	GetDeploymentJob(context.Context, string) (domain.DeploymentJob, error)
+	ListDeploymentJobs(context.Context, int) ([]domain.DeploymentJobSummary, error)
+}
+
+type DeploymentProgressPublisher func(domain.DeploymentEvent) error

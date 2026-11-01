@@ -83,6 +83,7 @@ func VerifyLanguagePackage(artifact []byte, expectedSHA256 string) (VerifiedPack
 type DeploymentRepository interface {
 	CreateDeploymentJob(context.Context, domain.DeploymentJob) (domain.DeploymentJob, error)
 	TransitionDeploymentJob(context.Context, domain.DeploymentJob, domain.DeploymentEvent) error
+	AppendDeploymentEvent(context.Context, string, domain.DeploymentState, domain.DeploymentEvent) (domain.DeploymentEvent, error)
 	GetDeploymentJob(context.Context, string) (domain.DeploymentJob, error)
 	ListDeploymentJobs(context.Context, int) ([]domain.DeploymentJobSummary, error)
 }
@@ -127,13 +128,13 @@ type DeploymentProvider interface {
 
 **Файлы:** создать `internal/core/application/deployment.go`, `internal/core/application/deployment_test.go`; изменить `internal/core/application/service.go` и конструкторы сервиса.
 
-- [ ] **Step 1: Написать failing application tests** для package verifier success/failure; exact synthetic supported; unknown/unsupported rejection; Production blocked for каждый readiness prerequisite; provider не вызывается для Production; unauthorized/non-synthetic target rejection; event persisted before callback; provider error, deadline, cancellation and recovery check.
-- [ ] **Step 2: Определить** `productionDeploymentEnabled = false` в Core policy; mode `production` должен записать job/checklist `blocked` и вернуть его без вызова provider. Никакой config/UI flag не может переопределить policy.
-- [ ] **Step 3: Реализовать** `DeploymentService` с `StartJob`, `RunJob`, `CancelJob`, `GetJob`, `ListJobs`; `StartJob` получает существующий project/package через `LocalizationService`, проверяет package SHA/integrity, создаёт persistent job, выполняет preflight; только test mode + embedded synthetic `supported` profile + synthetic provider `CanSimulate && CanVerifyResult && CanCheckRecovery` запускает simulation.
-- [ ] **Step 4: Гарантировать порядок** для каждого progress update: Core валидирует transition → repository атомарно сохраняет job/event → event publisher best-effort emit. Потеря live Wails event восстанавливается `GetJob`/`ListJobs`; ошибка сохранения останавливает provider flow.
-- [ ] **Step 5: Повторить** `go test ./internal/core/application ./internal/deployment -run Deployment -count=1`; все preflight and state tests должны проходить. Проверить `go test ./internal/core/application -run TestProductionDeploymentNeverCallsProvider -count=1` отдельно.
-- [ ] **Step 6: Подключить** `DeploymentService` через `application.Service` и local composition root; `internal/composition/local.go` инжектирует `postgres.NewDeploymentRepository(pool)` и только `internal/deployment.NewSimulatedProvider()`.
-- [ ] **Step 7: Commit** `feat: add fail-closed deployment core`.
+- [x] **Step 1: Написать failing application tests** для package verifier success/failure; exact synthetic supported; unknown/unsupported rejection; Production blocked for каждый readiness prerequisite; provider не вызывается для Production; provider installation/result/recovery capability gates; event persisted before callback; provider error, deadline, cancellation and recovery check. Встроенный simulator catalog содержит только synthetic профили, поэтому non-synthetic rejection остаётся защитной runtime-проверкой без такого fixture.
+- [x] **Step 2: Определить** `productionDeploymentEnabled = false` в Core policy; mode `production` записывает job/checklist `blocked` без вызова provider. Policy compile-time, config/UI flag её не переопределяет.
+- [x] **Step 3: Реализовать** `DeploymentService` с `StartJob`, `RunJob`, `CancelJob`, `GetJob`, `ListJobs`; `StartJob` получает CARVION package через `LocalizationService`, сохраняет hash, а `RunJob` перечитывает именно сохранённый artifact по SHA, выполняет integrity verification и preflight. Только test mode + embedded synthetic `supported` profile + synthetic provider `CanSimulate && CanVerifyResult && CanCheckRecovery` запускает simulation.
+- [x] **Step 4: Гарантировать порядок** для progress: Core валидирует stage/state → repository атомарно сохраняет событие/переход → publisher best-effort emit. UI может восстановить пропущенные события через `GetJob`/`ListJobs`; ошибка хранения останавливает provider flow.
+- [x] **Step 5: Проверить** `go test ./internal/core/application ./internal/composition ./internal/core/infrastructure/postgres ./internal/localization ./internal/deployment -count=1`, `go test -tags=integration ./internal/core/infrastructure/postgres -run '^$' -count=1`, `go vet` этих Go-пакетов и `git diff --check`; все завершились с кодом 0. Отдельно проверены production blocker, provider error, timeout, cancel и восстановление. PostgreSQL DB integration пропущен: `CARVION_TEST_DATABASE_URL` отсутствует.
+- [x] **Step 6: Подключить** `DeploymentService` через `application.Service` и local composition root; `internal/composition/local.go` инжектирует `postgres.NewDeploymentRepository(pool)`, `deployment.NewPackageVerifier()` и только `deployment.NewSimulatedProvider()`.
+- [x] **Step 7: Commit** `feat: add fail-closed deployment core`.
 
 ## Task 6: Wails facade, live progress и lifecycle
 

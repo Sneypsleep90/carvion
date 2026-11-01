@@ -142,6 +142,46 @@ func (r *DeploymentRepository) TransitionDeploymentJob(ctx context.Context, job 
 	return nil
 }
 
+func (r *DeploymentRepository) AppendDeploymentEvent(ctx context.Context, jobID string, expectedState domain.DeploymentState, event domain.DeploymentEvent) (domain.DeploymentEvent, error) {
+	if strings.TrimSpace(jobID) == "" || (event.JobID != "" && event.JobID != jobID) || event.Sequence != 0 || (event.State != "" && event.State != expectedState) {
+		return domain.DeploymentEvent{}, fmt.Errorf("%w: deployment event identity or state is invalid", domain.ErrInvalidArgument)
+	}
+	if err := validateDeploymentEvent(event); err != nil {
+		return domain.DeploymentEvent{}, err
+	}
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return domain.DeploymentEvent{}, deploymentDBError(ctx, "begin progress event", err)
+	}
+	defer func() { _ = tx.Rollback(context.Background()) }()
+	var currentState string
+	err = tx.QueryRow(ctx, `SELECT state FROM deployment_jobs WHERE id = $1::uuid FOR UPDATE`, jobID).Scan(&currentState)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.DeploymentEvent{}, domain.ErrDeploymentJobNotFound
+	}
+	if err != nil {
+		return domain.DeploymentEvent{}, deploymentDBError(ctx, "lock job for progress event", err)
+	}
+	if domain.DeploymentState(currentState) != expectedState || expectedState.Terminal() {
+		return domain.DeploymentEvent{}, fmt.Errorf("%w: progress event no longer matches the active job state", domain.ErrDeploymentStateConflict)
+	}
+	var sequence int64
+	if err := tx.QueryRow(ctx, `SELECT COALESCE(MAX(sequence), 0) + 1 FROM deployment_job_events WHERE job_id = $1::uuid`, jobID).Scan(&sequence); err != nil {
+		return domain.DeploymentEvent{}, deploymentDBError(ctx, "allocate progress event sequence", err)
+	}
+	event.JobID = jobID
+	event.Sequence = sequence
+	event.State = expectedState
+	event.At = nowUTC()
+	if err := insertDeploymentEvent(ctx, tx, event); err != nil {
+		return domain.DeploymentEvent{}, deploymentDBError(ctx, "append progress event", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return domain.DeploymentEvent{}, deploymentDBError(ctx, "commit progress event", err)
+	}
+	return event, nil
+}
+
 func (r *DeploymentRepository) GetDeploymentJob(ctx context.Context, jobID string) (domain.DeploymentJob, error) {
 	job, err := scanDeploymentJob(r.pool.QueryRow(ctx, `
 		SELECT id::text, project_id::text, target_profile_id, mode, provider_id, package_sha256,

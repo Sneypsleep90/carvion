@@ -54,6 +54,16 @@ func TestDeploymentRepositoryPersistsOrderedAppendOnlyAudit(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("TransitionDeploymentJob() queued → preflighting error = %v", err)
 	}
+	progress, err := repository.AppendDeploymentEvent(ctx, job.ID, domain.DeploymentStatePreflighting, domain.DeploymentEvent{
+		Stage: "preflight.package", Message: "Synthetic package check completed",
+	})
+	if err != nil || progress.Sequence != 3 {
+		t.Fatalf("AppendDeploymentEvent() = %+v, %v; want sequence 3", progress, err)
+	}
+	progressHistory, err := repository.GetDeploymentJob(ctx, job.ID)
+	if err != nil || len(progressHistory.Events) != 3 || progressHistory.Events[2].Stage != "preflight.package" {
+		t.Fatalf("progress event history = %+v, %v", progressHistory.Events, err)
+	}
 	productionJob, err := repository.CreateDeploymentJob(ctx, domain.DeploymentJob{
 		ProjectID: projectID, Mode: domain.DeploymentModeProduction, PackageSHA256: strings.Repeat("c", 64),
 		State: domain.DeploymentStateQueued,

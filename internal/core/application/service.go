@@ -14,6 +14,7 @@ type Service struct {
 	adapters     AdapterGateway
 	catalog      CatalogRepository
 	localization *LocalizationService
+	deployment   *DeploymentService
 }
 
 func NewService(adapters AdapterGateway, catalog CatalogRepository) (*Service, error) {

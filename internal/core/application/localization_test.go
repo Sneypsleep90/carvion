@@ -142,6 +142,7 @@ type localizationRepositoryFake struct {
 	project          domain.LocalizationProject
 	translationSaves int
 	validationSaves  int
+	packages         map[string][]byte
 }
 
 func (r *localizationRepositoryFake) CreateLocalizationProject(_ context.Context, project domain.LocalizationProject) (domain.LocalizationProject, error) {
@@ -224,7 +225,19 @@ func (r *localizationRepositoryFake) SaveLocalizationValidation(context.Context,
 	return "validation-1", nil
 }
 
-func (r *localizationRepositoryFake) SaveLocalizationPackage(_ context.Context, _ string, item domain.LocalizationPackage, _ string, _ []byte) (domain.LocalizationPackage, error) {
+func (r *localizationRepositoryFake) SaveLocalizationPackage(_ context.Context, projectID string, item domain.LocalizationPackage, _ string, artifact []byte) (domain.LocalizationPackage, error) {
 	item.ID = "package-1"
+	if r.packages == nil {
+		r.packages = make(map[string][]byte)
+	}
+	r.packages[projectID+":"+item.SHA256] = append([]byte(nil), artifact...)
 	return item, nil
+}
+
+func (r *localizationRepositoryFake) GetLocalizationPackage(_ context.Context, projectID, packageSHA256 string) ([]byte, error) {
+	artifact, ok := r.packages[projectID+":"+packageSHA256]
+	if !ok {
+		return nil, domain.ErrLocalizationPackageNotFound
+	}
+	return append([]byte(nil), artifact...), nil
 }

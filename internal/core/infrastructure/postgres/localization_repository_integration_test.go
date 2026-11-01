@@ -3,6 +3,7 @@
 package postgres
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -120,6 +121,13 @@ func TestLocalizationRepositoryPersistsProjectHistoryValidationAndPackage(t *tes
 	}
 	if savedPackage.ID == "" {
 		t.Fatal("SaveLocalizationPackage() returned an empty ID")
+	}
+	storedArtifact, err := repository.GetLocalizationPackage(ctx, project.ID, savedPackage.SHA256)
+	if err != nil {
+		t.Fatalf("GetLocalizationPackage() error = %v", err)
+	}
+	if !bytes.Equal(storedArtifact, artifact) {
+		t.Fatal("GetLocalizationPackage() returned bytes different from the stored artifact")
 	}
 }
 

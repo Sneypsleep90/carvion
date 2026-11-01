@@ -12,6 +12,7 @@ import (
 	"github.com/Sneypsleep90/carvion/internal/core/infrastructure/adapterbridge"
 	"github.com/Sneypsleep90/carvion/internal/core/infrastructure/postgres"
 	"github.com/Sneypsleep90/carvion/internal/database"
+	"github.com/Sneypsleep90/carvion/internal/deployment"
 	"github.com/Sneypsleep90/carvion/internal/pluginmanager"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -51,10 +52,13 @@ func NewLocal(ctx context.Context, cfg config.Config, logger *slog.Logger) (*Run
 		return nil, fmt.Errorf("discover local adapters: %w", err)
 	}
 
-	core, err := application.NewServiceWithLocalization(
+	core, err := application.NewServiceWithDeployment(
 		adapterbridge.New(manager),
 		postgres.NewCatalogRepository(pool),
 		postgres.NewLocalizationRepository(pool),
+		postgres.NewDeploymentRepository(pool),
+		deployment.NewPackageVerifier(),
+		deployment.NewSimulatedProvider(),
 	)
 	if err != nil {
 		pool.Close()

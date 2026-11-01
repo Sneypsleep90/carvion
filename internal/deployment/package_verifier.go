@@ -45,6 +45,15 @@ type VerifiedPackage struct {
 	Manifest PackageManifest `json:"manifest"`
 }
 
+type PackageVerifier struct{}
+
+func NewPackageVerifier() *PackageVerifier { return &PackageVerifier{} }
+
+func (*PackageVerifier) VerifyLanguagePackage(artifact []byte, expectedSHA256 string) error {
+	_, err := VerifyLanguagePackage(artifact, expectedSHA256)
+	return err
+}
+
 type packageManifestWire struct {
 	Schema         string `json:"schema"`
 	PackageType    string `json:"package_type"`
