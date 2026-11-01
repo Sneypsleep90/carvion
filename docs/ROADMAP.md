@@ -6,9 +6,9 @@
 |---|---|---|
 | Step 0 | Audit & Documentation | Выполнено 2026-11-01; код не менялся |
 | Step 1 | Desktop-First Core Refactoring | Выполнено 2026-11-01; Core вызывает Go-сервисы напрямую, HTTP сохранён отдельным transport |
-| Step 2 | Wails Desktop Foundation | Следующий этап; Wails/UI пока отсутствуют |
-| Step 3 | Adapter SDK & Plugin Manager | Основные SDK/manager/demo реализованы и тестировались ранее; требуется интеграция с новым core и приёмка по новому порядку |
-| Step 4 | Localization Engine | Запланировано |
+| Step 2 | Wails Desktop Foundation | Выполнено 2026-11-01; Wails app, React UI, direct bindings и macOS packaging |
+| Step 3 | Adapter SDK & Plugin Manager | Выполнено 2026-11-01; manifest v2, SDK contract, process RPC и Desktop adapter selection |
+| Step 4 | Localization Engine | Следующий этап |
 | Step 5 | CARVION Simulator | Запланировано; синтетические сценарии должны быть явно отделены от реальных систем |
 | Step 6 | Geely Research Adapter | Запланировано; источники и данные требуют исследования, поддержка не заявлена |
 | Step 7 | Deployment Engine | Запланировано; только разрешённые и документированные операции |
@@ -24,13 +24,13 @@
 
 Выделены `internal/core/domain`, `internal/core/application` и `internal/core/infrastructure`; добавлены application ports, PostgreSQL catalog repository и adapter bridge. `internal/composition.NewLocal` собирает Core и управляет DB lifecycle. HTTP API сохранён как отдельный transport, его handlers вызывают Core; конфигурация HTTP отделена от Core config. SDK, Manager, Demo Adapter и migrations сохранены. Проверки: unit/service tests, integration test PostgreSQL repository, API smoke и graceful shutdown. Wails пока не добавлен; режим будущего Hub-backed repository и авторизация требуют следующих решений.
 
-### Step 2 — Wails Desktop Foundation
+### Step 2 — Wails Desktop Foundation — выполнено 2026-11-01
 
-Добавить Wails 3 shell, React/TypeScript UI и выбранную настройку Tailwind/shadcn/ui; связать UI только с Go application services через bindings. Готово, когда Desktop запускается на согласованных ОС, показывает базовое состояние приложения, а UI не содержит доменную логику.
+Добавлен отдельный Go module `desktop/` с Wails v3.0.0, embedded React/TypeScript UI, Tailwind CSS 4, shadcn-style UI primitives и Lucide icons. `ApplicationService` создаёт `composition.NewLocal`, использует Wails lifecycle context, напрямую вызывает Core и закрывает runtime при shutdown. UI показывает live local Core/PostgreSQL/adapter state, каталог, synthetic compatibility и Android XML inspection; REST не используется для UI. Разделы языковых пакетов/истории и часть настроек пока placeholders. `make desktop-test`, lint и builds прошли; native arm64 `.app` запущен, compatibility/XML operations проверены через Wails bindings. Подпись/notarization и production storage остаются за рамками.
 
-### Step 3 — Adapter SDK & Plugin Manager
+### Step 3 — Adapter SDK & Plugin Manager — выполнено 2026-11-01
 
-Сохранить и интегрировать существующие SDK v1, manifest discovery, process JSON-RPC и demo в новые core services. Закрыть пробелы контрактов для вызовов адаптеров из Desktop. Готово, когда Desktop core вызывает синтетический адаптер и корректно представляет app-level results/errors.
+SDK API v1 сохранён; manifest schema v2 объявляет SDK SemVer, входные типы и форматы ресурсов. Manager валидирует manifest, обнаруживает trusted local packages, регистрирует только процесс с совпадающим `GetInfo`, выполняет JSON-RPC 2.0 через stdin/stdout и обрабатывает malformed responses, errors, parent cancellation и timeout. `adapter-android-demo` остаётся синтетическим. Desktop показывает metadata и последний runtime status; Diagnostics и Localization вызывают выбранный адаптер только при наличии нужной capability/формата. Тесты покрывают SDK/API mismatch, process launch/routing, timeout, ошибки RPC и UI selection. Процессы не являются OS sandbox; Hub distribution, package signing и реальные автомобильные данные не реализованы.
 
 ### Step 4 — Localization Engine
 
@@ -52,4 +52,4 @@
 
 Проработать происхождение и проверку подписанных дистрибутивов адаптеров, обновления, аккаунты и коммерческую модель. Не добавлять сетевую доставку кода до threat model и решения о доверии.
 
-Детализация ближайших задач: [NEXT_STEPS.md](NEXT_STEPS.md). Все будущие стадии являются планом, за исключением уже реализованных компонентов Step 3.
+Детализация ближайших задач: [NEXT_STEPS.md](NEXT_STEPS.md). Все дальнейшие этапы являются планом, кроме явно отмеченных выполненными.

@@ -93,8 +93,13 @@ func runRPC(ctx context.Context, registered *plugin, method string, params, resu
 	}
 
 	var response sdk.RPCResponse
-	if err := json.Unmarshal(bytes.TrimSpace(frame), &response); err != nil {
+	responseDecoder := json.NewDecoder(bytes.NewReader(bytes.TrimSpace(frame)))
+	responseDecoder.DisallowUnknownFields()
+	if err := responseDecoder.Decode(&response); err != nil {
 		return stderr.String(), fmt.Errorf("decode adapter response: %w", err)
+	}
+	if err := responseDecoder.Decode(new(any)); !errors.Is(err, io.EOF) {
+		return stderr.String(), errors.New("adapter response must contain exactly one JSON object")
 	}
 	if response.JSONRPC != "2.0" || response.ID != "1" {
 		return stderr.String(), errors.New("adapter response has an invalid JSON-RPC version or ID")
@@ -105,8 +110,13 @@ func runRPC(ctx context.Context, registered *plugin, method string, params, resu
 	if len(response.Result) == 0 {
 		return stderr.String(), errors.New("adapter response is missing a result")
 	}
-	if err := json.Unmarshal(response.Result, result); err != nil {
+	resultDecoder := json.NewDecoder(bytes.NewReader(response.Result))
+	resultDecoder.DisallowUnknownFields()
+	if err := resultDecoder.Decode(result); err != nil {
 		return stderr.String(), fmt.Errorf("decode adapter result: %w", err)
+	}
+	if err := resultDecoder.Decode(new(any)); !errors.Is(err, io.EOF) {
+		return stderr.String(), errors.New("adapter result must contain exactly one JSON value")
 	}
 	return stderr.String(), nil
 }

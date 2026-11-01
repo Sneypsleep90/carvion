@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=CARVION Studio
+Comment=Desktop engineering workspace for automotive multimedia systems
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/carvionstudio %u
+Terminal=false
+Type=Application
+Icon=carvionstudio
+Categories=Utility;
+StartupWMClass=carvionstudio
+
+ 

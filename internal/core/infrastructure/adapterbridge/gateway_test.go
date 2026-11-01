@@ -48,6 +48,8 @@ func TestGatewayMapsAdapterListAndCompatibilityResults(t *testing.T) {
 	manager := &managerStub{
 		items: []pluginmanager.AdapterSummary{{
 			ID: "adapter-demo", Name: "Synthetic Demo", Version: "1.2.3", APIVersion: "v1",
+			SDKVersion: sdk.SDKVersion, InputTypes: []sdk.AdapterInputType{sdk.InputCompatibilityProfile},
+			ResourceFormats: []string{}, Status: pluginmanager.AdapterStatusAvailable,
 			Capabilities: sdk.AdapterCapabilities{CheckCompatibility: true},
 		}},
 		result: sdk.CompatibilityResult{Status: sdk.StatusUnknown, Reason: "profile not found"},
@@ -56,7 +58,8 @@ func TestGatewayMapsAdapterListAndCompatibilityResults(t *testing.T) {
 	ctx := context.Background()
 
 	items, err := gateway.List(ctx)
-	if err != nil || len(items) != 1 || items[0].ID != "adapter-demo" || !items[0].Capabilities.CheckCompatibility {
+	if err != nil || len(items) != 1 || items[0].ID != "adapter-demo" || !items[0].Capabilities.CheckCompatibility ||
+		items[0].SDKVersion != sdk.SDKVersion || items[0].Status != domain.AdapterStatusAvailable || len(items[0].InputTypes) != 1 {
 		t.Fatalf("List() = %+v, %v", items, err)
 	}
 	request := domain.CompatibilityRequest{Firmware: domain.FirmwareInfo{BuildID: "build-x", Version: "1.0"}}
@@ -78,6 +81,7 @@ func TestGatewayMapsManagerErrorsToDomainErrors(t *testing.T) {
 	}{
 		{name: "not found", err: pluginmanager.ErrAdapterNotFound, want: domain.ErrAdapterNotFound},
 		{name: "capability", err: pluginmanager.ErrCapabilityUnavailable, want: domain.ErrCapabilityUnavailable},
+		{name: "resource format", err: pluginmanager.ErrResourceFormatUnavailable, want: domain.ErrResourceFormatUnavailable},
 		{name: "timeout", err: pluginmanager.ErrPluginTimeout, want: domain.ErrAdapterTimeout},
 		{name: "process", err: pluginmanager.ErrPluginUnavailable, want: domain.ErrAdapterUnavailable},
 	}

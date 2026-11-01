@@ -7,7 +7,7 @@
 | Документ | Содержание |
 |---|---|
 | [PROJECT.md](PROJECT.md) | Назначение CARVION, цели и текущее состояние возможностей |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Текущая и целевая архитектура, HTTP-зависимости и границы компонентов |
+| [ARCHITECTURE.md](architecture.md) | Текущая и целевая архитектура, HTTP-зависимости и границы компонентов |
 | [TECH_STACK.md](TECH_STACK.md) | Установленные зависимости и планируемый Desktop-стек |
 | [ROADMAP.md](ROADMAP.md) | Этапы Step 0–8 в заданном порядке |
 | [PROGRESS.md](PROGRESS.md) | Журнал по датам с компонентами, проверками и оставшимися задачами |
@@ -15,8 +15,13 @@
 | [DECISIONS.md](DECISIONS.md) | Архитектурные решения, причины и альтернативы |
 | [TESTING.md](TESTING.md) | Стратегия проверок и фактические результаты |
 | [KNOWN_ISSUES.md](KNOWN_ISSUES.md) | Архитектурные пробелы, ограничения и технический долг |
-| [NEXT_STEPS.md](NEXT_STEPS.md) | Задачи следующего этапа Desktop-First Core Refactoring |
-| [adapters/README.md](adapters/README.md) | SDK, Plugin Manager, протокол и demo adapter |
+| [NEXT_STEPS.md](NEXT_STEPS.md) | Ближайшие задачи Localization Engine |
+| [DESKTOP.md](DESKTOP.md) | Интерфейс CARVION Studio, Wails bindings и локальные команды |
+| [adapters/README.md](adapters/README.md) | Индекс SDK и Plugin Manager |
+| [adapters/SDK.md](adapters/SDK.md) | Версии manifest и контракты SDK |
+| [adapters/PLUGIN_PROTOCOL.md](adapters/PLUGIN_PROTOCOL.md) | JSON-RPC и lifecycle process adapter |
+| [adapters/CREATING_ADAPTER.md](adapters/CREATING_ADAPTER.md) | Руководство по созданию адаптера |
+| [adapters/SECURITY.md](adapters/SECURITY.md) | Границы доверия и контроля ядра |
 | [research/README.md](research/README.md) | Индекс технических исследований платформ |
 
 ## Статусные обозначения
@@ -28,8 +33,11 @@
 
 ## Сохранённые заметки предыдущих этапов
 
-- [`adapter-sdk.md`](adapter-sdk.md) содержит протокольные подробности реализованного SDK v1; Desktop-интеграция и общий статус описаны в `adapters/README.md`.
+- [`adapter-sdk.md`](adapter-sdk.md) сохранён как историческая запись исходного SDK этапа; актуальный контракт и протокол описаны в `adapters/`.
+- [DESKTOP.md](DESKTOP.md) описывает реализованное Wails-приложение, его ограничения и запуск на macOS.
 
 Исторический архитектурный снимок исходного API/SDK этапа: [`history/architecture-foundation-adapter-sdk.md`](history/architecture-foundation-adapter-sdk.md).
 
 Начальная точка проекта: [README.md](../README.md). Инструкции для будущих сессий Codex: [AGENTS.md](../AGENTS.md).
+
+Краткие команды запуска Desktop и API: [RUN.md](../RUN.md).

@@ -94,6 +94,9 @@ func dispatch(ctx context.Context, adapter Adapter, request RPCRequest) (any, *R
 			return nil, invalidParams(err)
 		}
 		result, err := adapter.GetInfo(ctx)
+		if err == nil {
+			err = ValidateManifest(result)
+		}
 		return result, adapterError(err)
 	case "Detect":
 		var params DetectRequest

@@ -4,12 +4,13 @@
 
 ## Архитектура и продукт
 
-- **Desktop отсутствует:** нет Wails, UI и bindings. Core application service готов для прямого вызова из Go, но Desktop host ещё не создан.
+- **Desktop покрывает начальный read-only scope:** основные dashboard/catalog/diagnostics/XML inspection flows реализованы; Language Packages и Operation History — placeholders, а Settings ограничены runtime details.
 - **API покрывает не все SDK operations:** HTTP предоставляет список и compatibility check; `Detect` и `InspectResources` доступны через Core/Manager, но routes отсутствуют.
 - **Repository пока read-only и неполный:** `CatalogRepository` читает только `manufacturers`, `vehicle_models`, `infotainment_platforms`. Нет repositories/use cases для adapter definitions, versions, hardware variants, firmware builds и compatibility rules.
 - **Нет связи DB catalog и manifest discovery:** Manager регистрирует адаптеры в памяти; PostgreSQL adapter tables не синхронизируются с локальными manifests.
 - **Hub-backed storage отсутствует:** application repository port позволяет подключить remote implementation, но клиент Hub, API endpoints для каталога и auth ещё не реализованы.
-- **Desktop PostgreSQL deployment не решён:** локальная БД используется при разработке. Для будущего Desktop/Hub flow ещё нужны авторизация, offline policy, миграции и способ управления local dev DB; административные DB credentials не входят в Core service.
+- **Desktop PostgreSQL deployment не решён:** локальная БД используется при разработке; production клиентская схема (Hub, offline policy, migrations) и auth требуют решения. Desktop facade не отдаёт DB credentials frontend.
+- **macOS distribution не готов:** локальная `.app` собирается для arm64 и проходит ad-hoc signature check; Developer ID signing, notarization и обновление приложения не настроены.
 
 ## Config, dependencies, operations
 
@@ -19,6 +20,8 @@
 - **HTTP exposure:** default `HTTP_HOST` — `127.0.0.1`, но его можно настроить на внешний interface; auth, mTLS и rate limiting отсутствуют. Не публиковать API наружу без отдельного решения и защиты.
 - **Process isolation ограничено:** timeout, bounded frames и environment allowlist не образуют OS sandbox; процесс наследует права пользователя.
 - **Generated binaries:** `bin/carvion-api` и demo executable создаются `make build`, игнорируются Git и не являются source.
+- **npm install warning:** Wails packaging сообщает, что install scripts `fsevents` ещё не одобрены в npm `allow-scripts`; текущий `npm install` и сборка успешны, audit нашёл 0 vulnerabilities.
+- **Desktop CI coverage:** текущий GitHub workflow не запускает nested `desktop/` tests, TypeScript/Playwright или macOS package build; эти команды проверялись вручную на Apple Silicon.
 - **Повторяющиеся metadata/status invariants:** demo manifest повторяет значения `GetInfo()` в Go, а Manager сверяет их при регистрации; правки надо синхронизировать. Проверка допустимого compatibility status независимо реализована в SDK, Manager и demo adapter. Это небольшой maintenance debt, а не подтверждённый функциональный дефект.
 
 ## Данные и безопасность
@@ -29,6 +32,6 @@
 
 ## Тестовое покрытие
 
-- Unit/service tests, `make test`, lint, build и PostgreSQL integration test прошли 2026-11-01; фактические команды записаны в [TESTING.md](TESTING.md).
+- Go unit/service tests, `make lint`, `make build`, Desktop TypeScript/E2E/build и native macOS smoke прошли 2026-11-01; фактические команды записаны в [TESTING.md](TESTING.md).
 - PostgreSQL integration test проверяет чтение Foundation tables, но SQL schema constraints не покрыты отдельными automated tests.
-- UI, Wails lifecycle, packaging и Desktop E2E не имеют кода или тестов.
+- Wails lifecycle имеет unit tests, UI имеет Playwright E2E с fake backend; полноценного native-window automation в CI нет.

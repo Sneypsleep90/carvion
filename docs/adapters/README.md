@@ -1,34 +1,27 @@
-# Система адаптеров
+# Адаптеры CARVION
 
 ## Состояние
 
-**Реализовано и проверено:** `pkg/adaptersdk/v1`, process JSON-RPC, `internal/pluginmanager`, manifest discovery/validation и synthetic `adapter-android-demo`. В новом roadmap это Step 3; интеграция с Desktop core ещё впереди.
+**Реализовано и проверено:** SDK API v1, manifest schema v2, локальная discovery в доверенном каталоге, process-per-call JSON-RPC 2.0, синтетический `adapter-android-demo` и Desktop экран адаптеров. В Desktop доступны выбор адаптера для проверки совместимости и чтения Android XML.
 
-**Не реализовано:** Hub delivery, OS sandbox, remote plugins, real-vehicle data acquisition, реальные platform profiles и firmware deployment.
+**Реализовано, но не является production sandbox:** менеджер ограничивает время, размер RPC frame, число параллельных вызовов и окружение процесса. Процесс всё ещё работает с правами пользователя CARVION.
 
-## Контракт SDK
+**Запланировано:** signed distribution, remote Hub registry, OS sandbox, синхронизация PostgreSQL adapter tables и реальный сбор данных. Для платформ и прошивок без подтверждённых профилей результат должен быть `unknown`.
 
-SDK v1 определяет `AdapterManifest`, `VehicleIdentity`, `FirmwareInfo`, `HardwareInfo`, `CompatibilityResult`, `AdapterCapabilities` и операции:
+## Документы
 
-- `GetInfo` — вернуть manifest адаптера.
-- `Detect` — обработать наблюдение, переданное ядром.
-- `CheckCompatibility` — вернуть `supported`, `unsupported` или `unknown`.
-- `InspectResources` — разобрать переданное ядром содержимое ресурса.
+- [SDK и manifest](SDK.md)
+- [JSON-RPC protocol](PLUGIN_PROTOCOL.md)
+- [Создание адаптера](CREATING_ADAPTER.md)
+- [Границы безопасности](SECURITY.md)
 
-Текущий API version — `v1`, manifest schema version — `1`. Подробности wire protocol см. в [adapter-sdk.md](../adapter-sdk.md).
+## Код
 
-## Регистрация и вызов
+- `pkg/adaptersdk/v1` — API types, manifest validation и JSON-RPC server.
+- `internal/pluginmanager` — trusted local discovery, регистрация, запуск, timeout и проверка ответов.
+- `internal/core/infrastructure/adapterbridge` — соединение Manager с application Core.
+- `internal/adapters/androiddemo` — synthetic demo implementation и fixture data.
+- `adapters/adapter-android-demo/manifest.json` — manifest для локального пакета.
+- `desktop/frontend/src/features/adapters-page.tsx` — список, версии, capabilities и runtime status.
 
-`ADAPTERS_DIR` по умолчанию `adapters`. Manager рассматривает прямые дочерние каталоги; в каждом ожидаются `manifest.json` и указанный исполняемый файл. Проверяются JSON fields, manifest/API version, ID, semantic version, capabilities, executable containment и совпадение `GetInfo` с manifest. Некорректные entries логируются и пропускаются.
-
-Для каждого вызова Manager запускает отдельный процесс и отправляет один JSON-RPC 2.0 frame через stdin; stdout содержит ответ, stderr — диагностику. Default timeout — 3 секунды, frame limit — 1 MiB, параллельность — до четырёх вызовов на adapter. Процесс получает минимальное окружение, без PostgreSQL URL, connection pool, device handles и путей к исходным файлам.
-
-Отдельный процесс не является OS sandbox. В каталоге должны находиться только файлы, которым доверяет владелец машины.
-
-## Синтетический пример
-
-`adapter-android-demo` распознаёт JSON тестовой фикстуры, допускает compatibility только при совпадении synthetic platform, hardware revision и firmware build/version, извлекает переводимые строки из переданного `strings.xml`. Неизвестные автомобиль и сборка дают `unknown`. Это не автомобильная база, не Geely adapter и не тест реального оборудования.
-
-## Следующая интеграция
-
-Application port и infrastructure bridge к Manager уже реализованы в Step 1. В Step 2 нужно подключить application service к Wails binding facade напрямую. Не переносить HTTP handlers в Desktop и не связывать UI с process RPC напрямую. Проверять SDK operations из Core и передавать ошибки через app-level contracts.
+Подробный локальный запуск описан в [RUN.md](../../RUN.md), Desktop — в [DESKTOP.md](../DESKTOP.md).

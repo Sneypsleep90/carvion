@@ -1,28 +1,27 @@
-# Ближайшие задачи: Step 2 — Wails Desktop Foundation
+# Ближайшие задачи: Step 4 — Localization Engine
 
-Step 1 Desktop-First Core Refactoring завершён. Следующая цель — добавить Desktop shell и подключить Go UI facade к `application.Service` напрямую. Полный roadmap: [ROADMAP.md](ROADMAP.md).
+Step 3 завершён: SDK API v1 с manifest schema v2, Plugin Manager, process JSON-RPC и тестовый адаптер интегрированы с Desktop. Следующий этап — workflow локализации. Roadmap: [ROADMAP.md](ROADMAP.md).
 
-## План работ
+## План работ Step 4
 
-1. **Создать Wails 3 entry point.** Desktop startup использует отдельную composition функцию, вызывает Go Core напрямую и не стартует loopback REST API как посредник для UI.
-2. **Добавить Go binding facade.** Фасад держит lifecycle context от Wails, вызывает `application.Service` и преобразует domain results в структуры, пригодные для binding. Он не должен зависеть от HTTP handlers.
-3. **Собрать минимальный React/TypeScript shell.** Добавить выбранные проектом Tailwind CSS и shadcn/ui только в нужном объёме; не добавлять localization workflow до Step 4.
-4. **Подключить read-only базовые экраны.** Использовать Core для списка адаптеров и доступного каталога. Проверку compatibility включать как тонкий экран над существующим Core use case.
-5. **Сохранить локальный dev storage.** Для разработки Wails может использовать `composition.NewLocal` и локальный PostgreSQL. Не добавлять административные DB credentials в UI или в Hub connection settings.
-6. **Сохранить HTTP API отдельно.** `cmd/carvion-api` остаётся отдельным Hub/API transport; Desktop не вызывает `/api/v1/...` на localhost.
-7. **Проверить lifecycle и ошибки.** Проверить startup failure, cancellation/shutdown, UI bindings и что context передаётся в Core. Сохранить API tests и process manager tests.
-8. **Синхронизировать документацию.** После этапа обновить архитектуру, roadmap/progress, changelog, decisions, testing, known issues и next steps.
+1. **Workflow анализа.** Развить XML inspection до проекта локализации с устойчивыми resource IDs и исходным текстом.
+2. **Редактирование и review.** Определить модель переводов, статусы проверки и журнал изменений без скрытого изменения исходных файлов.
+3. **Экспорт.** Спроектировать проверяемый формат языкового пакета и валидацию до записи результата.
+4. **Хранение.** Определить локальный project store и границы будущей Hub synchronization.
+5. **Тесты.** Покрыть parsing, duplicate IDs, invalid input, escaped XML, редактирование и export round-trip.
 
-## Открытые вопросы для Step 2
+## Уже доступно в Desktop
 
-- Какая минимальная версия macOS/Windows/Linux входит в desktop MVP и какие Wails build targets требуются?
-- Какой профиль запускается в Desktop MVP: local PostgreSQL development mode или уже Hub-backed remote mode? Hub client/auth пока не реализованы, поэтому не заявлять удалённый сценарий как рабочий.
-- Как Go facade оборачивает методы Core, принимающие `context.Context`, с учётом Wails binding API?
+- Обзор состояния Go Core, локальной PostgreSQL и обнаруженных адаптеров.
+- Список и сведения о synthetic demo adapter.
+- Read-only каталог систем из PostgreSQL.
+- Ручной compatibility check и synthetic Android `strings.xml` inspection через Go binding facade.
+- Выбор установленного адаптера по заявленной capability и формату ресурса; runtime status показывает последний вызов.
+- Восемь разделов навигации; языковые пакеты, история и часть настроек пока являются объясняющими placeholder views.
 
-## Критерии завершения
+## Ограничения и вопросы
 
-- Desktop shell запускается как Wails app на выбранных целевых ОС.
-- UI вызывает Core через Go bindings, без локального REST hop.
-- Доменная логика остаётся в Core, а UI/HTTP — transport/presentation layers.
-- Запуск и закрытие приложения освобождают Core resources; ошибки и отмена context обработаны.
-- `make test`, `make lint`, `make build` и релевантная Desktop verification реально выполнены и записаны в `TESTING.md`/`PROGRESS.md`.
+- Desktop runtime сейчас требует настроенный локальный `DATABASE_URL`; Hub-backed mode и auth не реализованы.
+- Нужно решить, поставляется ли PostgreSQL локально с Desktop либо Desktop MVP работает только через Hub. Решение должно сохранять отсутствие административных DB credentials в клиенте.
+- Текущие Desktop tests проверяют Go service facade и React E2E на браузерном тестовом backend; packaged app запускается вручную для smoke проверок.
+- Localization workflow, сохранение проектов, translation editing, экспорт и operation history относятся к Step 4.

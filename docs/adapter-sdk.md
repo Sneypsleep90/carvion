@@ -1,5 +1,7 @@
 # Vehicle Adapter SDK v1
 
+> Historical snapshot of the original SDK stage. The `manifest_version: 1` examples below have been superseded by Step 3 manifest schema v2. Use [the current SDK contract](adapters/SDK.md) and [process protocol](adapters/PLUGIN_PROTOCOL.md) for new adapters.
+
 ## Package and versioning
 
 Adapter authors import `github.com/Sneypsleep90/carvion/pkg/adaptersdk/v1`. The manifest declares `manifest_version: 1` and `api_version: "v1"`. The manager rejects other versions and checks that the process `GetInfo` response matches the manifest before registering the adapter.

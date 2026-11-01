@@ -1,23 +1,28 @@
 # CARVION
 
-CARVION — Desktop-first платформа для анализа и локализации программных ресурсов автомобильных мультимедийных систем через подключаемые адаптеры. Целевой интерфейс — Desktop-приложение на Wails 3, React и TypeScript с Go-ядром.
+CARVION — Desktop-first платформа для анализа и локализации программных ресурсов автомобильных мультимедийных систем через подключаемые адаптеры. CARVION Studio использует Wails 3, React и TypeScript с прямыми Go bindings к Go Core.
 
-В текущем репозитории реализована ранняя Go-основа: HTTP API, PostgreSQL setup, Adapter SDK v1, локальный Plugin Manager и синтетический demo adapter. Desktop-приложения, localization workflow и реальных адаптеров пока нет.
+В репозитории есть работающий Desktop foundation для macOS Apple Silicon, Go Core, HTTP API, PostgreSQL setup, Adapter SDK API v1 (manifest schema v2), локальный Plugin Manager и синтетический demo adapter. Production localization workflow и реальные адаптеры отсутствуют.
 
 Начните с [индекса документации](docs/README.md): там есть аудит, текущая и целевая архитектуры, roadmap, решения, тестовые результаты и ближайшие задачи.
+
+Быстрый запуск Desktop, API и тестов: [RUN.md](RUN.md).
 
 ## Текущее состояние
 
 - Go Core (`domain` / `application` / `infrastructure`), repository ports и local composition root.
 - Go API поверх Core, PostgreSQL connection pool/repository и Goose migrations.
 - `chi` HTTP routes для health/readiness, списка адаптеров и проверки совместимости.
-- Adapter SDK v1 и JSON-RPC 2.0 over stdin/stdout; Plugin Manager запускает локальные процессы.
+- Adapter SDK API v1 / manifest v2 и JSON-RPC 2.0 over stdin/stdout; Plugin Manager валидирует и запускает локальные процессы.
 - `adapter-android-demo` работает только с синтетическими тестовыми JSON/XML данными.
-- Wails, React UI, localization engine, simulator, Hub-backed repository и реальные vehicle adapters не реализованы.
+- Wails 3 app, React/TypeScript UI и typed bindings к Go Core.
+- Desktop показывает adapter versions, capabilities, input/resource formats и последний runtime status; можно выбрать тестовый адаптер для compatibility и Android strings XML inspection.
+- Языковые пакеты, история операций, редактирование/экспорт локализации, simulator, Hub-backed repository и реальные vehicle adapters пока не реализованы.
 
 ## Структура
 
 ```text
+desktop/                           Wails 3 host, Go bindings, React/TypeScript Studio
 cmd/carvion-api/                 API/Hub transport entry point
 cmd/adapter-android-demo/        Demo process entry point
 pkg/adaptersdk/v1/               Versioned SDK и JSON-RPC server
@@ -32,11 +37,12 @@ internal/database/               PostgreSQL pool
 internal/server/                 Текущие HTTP routes и middleware
 db/migrations/                   Goose SQL migrations
 docs/README.md                   Индекс документации
+docs/DESKTOP.md                  Архитектура Wails, интерфейс и запуск Studio
 ```
 
 Go module использует canonical path `github.com/Sneypsleep90/carvion`. Исходный код и документация публикуются в [GitHub repository](https://github.com/Sneypsleep90/carvion).
 
-## Локальная проверка текущей основы
+## Локальная проверка Go API
 
 Требуются Go 1.27.3, Docker Compose и `make`.
 
@@ -69,6 +75,25 @@ make build
 
 Integration test подключается только к явно заданной `CARVION_TEST_DATABASE_URL`; см. [TESTING.md](docs/TESTING.md). `ADAPTERS_DIR` по умолчанию `adapters`. Только доверенные локальные процессы должны находиться в каталоге.
 
+## Запуск CARVION Studio на macOS
+
+Требуются Wails CLI v3.0.0, Go 1.27.3, Node.js/npm, Xcode Command Line Tools и Docker Compose. Установите закреплённый CLI по [официальной инструкции Wails](https://v3.wails.io/quick-start/installation/): `go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0`. Подготовьте `.env`, затем:
+
+```sh
+make db-up
+make migrate-up
+make desktop-dev
+```
+
+Production `.app`:
+
+```sh
+make desktop-build
+make desktop-run
+```
+
+Подробности, ограничения режима хранения и команды тестов описаны в [docs/DESKTOP.md](docs/DESKTOP.md).
+
 ## Текущий roadmap
 
-Следующий этап: **Step 2 — Wails Desktop Foundation**. Wails bindings должны вызывать `application.Service` напрямую; Desktop не должен обращаться к Core через localhost REST API. SDK и Plugin Manager уже существуют и подключены к Core через infrastructure bridge. Полный план: [ROADMAP.md](docs/ROADMAP.md), ближайшие задачи: [NEXT_STEPS.md](docs/NEXT_STEPS.md).
+Следующий этап: **Step 4 — Localization Engine**. Desktop bindings вызывают Go `application.Service` напрямую; React не использует локальный REST API. Полный план: [ROADMAP.md](docs/ROADMAP.md), ближайшие задачи: [NEXT_STEPS.md](docs/NEXT_STEPS.md).

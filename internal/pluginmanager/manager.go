@@ -7,7 +7,10 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
+	"strings"
+	"sync"
 	"time"
 
 	sdk "github.com/Sneypsleep90/carvion/pkg/adaptersdk/v1"
@@ -19,18 +22,30 @@ const (
 )
 
 var (
-	ErrAdapterNotFound       = errors.New("adapter not found")
-	ErrCapabilityUnavailable = errors.New("adapter capability is not declared")
-	ErrPluginUnavailable     = errors.New("adapter process is unavailable")
-	ErrPluginTimeout         = errors.New("adapter call timed out")
+	ErrAdapterNotFound           = errors.New("adapter not found")
+	ErrCapabilityUnavailable     = errors.New("adapter capability is not declared")
+	ErrPluginUnavailable         = errors.New("adapter process is unavailable")
+	ErrPluginTimeout             = errors.New("adapter call timed out")
+	ErrResourceFormatUnavailable = errors.New("adapter resource format is not declared")
+)
+
+type AdapterStatus string
+
+const (
+	AdapterStatusAvailable   AdapterStatus = "available"
+	AdapterStatusUnavailable AdapterStatus = "unavailable"
 )
 
 type AdapterSummary struct {
-	ID           string                  `json:"id"`
-	Name         string                  `json:"name"`
-	Version      string                  `json:"version"`
-	APIVersion   string                  `json:"api_version"`
-	Capabilities sdk.AdapterCapabilities `json:"capabilities"`
+	ID              string                  `json:"id"`
+	Name            string                  `json:"name"`
+	Version         string                  `json:"version"`
+	APIVersion      string                  `json:"api_version"`
+	SDKVersion      string                  `json:"sdk_version"`
+	Capabilities    sdk.AdapterCapabilities `json:"capabilities"`
+	InputTypes      []sdk.AdapterInputType  `json:"input_types"`
+	ResourceFormats []string                `json:"resource_formats"`
+	Status          AdapterStatus           `json:"status"`
 }
 
 type plugin struct {
@@ -38,6 +53,20 @@ type plugin struct {
 	directory  string
 	executable string
 	slots      chan struct{}
+	statusMu   sync.RWMutex
+	status     AdapterStatus
+}
+
+func (p *plugin) setStatus(status AdapterStatus) {
+	p.statusMu.Lock()
+	p.status = status
+	p.statusMu.Unlock()
+}
+
+func (p *plugin) currentStatus() AdapterStatus {
+	p.statusMu.RLock()
+	defer p.statusMu.RUnlock()
+	return p.status
 }
 
 type Manager struct {
@@ -141,7 +170,7 @@ func DiscoverContext(ctx context.Context, root string, timeout time.Duration, lo
 			logger.Warn("adapter registration skipped", "directory", entry.Name(), "adapter_id", manifest.ID, "error", err)
 			continue
 		}
-		if pluginInfo != manifest {
+		if !manifestsEqual(pluginInfo, manifest) {
 			delete(manager.plugins, manifest.ID)
 			logger.Warn("adapter registration skipped", "directory", entry.Name(), "adapter_id", manifest.ID, "error", "GetInfo does not match manifest")
 			continue
@@ -159,11 +188,15 @@ func (m *Manager) List() []AdapterSummary {
 	for _, registered := range m.plugins {
 		manifest := registered.manifest
 		items = append(items, AdapterSummary{
-			ID:           manifest.ID,
-			Name:         manifest.Name,
-			Version:      manifest.Version,
-			APIVersion:   manifest.APIVersion,
-			Capabilities: manifest.Capabilities,
+			ID:              manifest.ID,
+			Name:            manifest.Name,
+			Version:         manifest.Version,
+			APIVersion:      manifest.APIVersion,
+			SDKVersion:      manifest.SDKVersion,
+			Capabilities:    manifest.Capabilities,
+			InputTypes:      slices.Clone(manifest.InputTypes),
+			ResourceFormats: slices.Clone(manifest.ResourceFormats),
+			Status:          registered.currentStatus(),
 		})
 	}
 	sort.Slice(items, func(i, j int) bool { return items[i].ID < items[j].ID })
@@ -178,6 +211,10 @@ func (m *Manager) GetInfo(ctx context.Context, adapterID string) (sdk.AdapterMan
 	var result sdk.AdapterManifest
 	if err := m.invoke(ctx, registered, "GetInfo", struct{}{}, &result); err != nil {
 		return sdk.AdapterManifest{}, err
+	}
+	if !manifestsEqual(result, registered.manifest) {
+		registered.setStatus(AdapterStatusUnavailable)
+		return sdk.AdapterManifest{}, fmt.Errorf("%w: GetInfo no longer matches the registered manifest", ErrPluginUnavailable)
 	}
 	return result, nil
 }
@@ -195,6 +232,7 @@ func (m *Manager) Detect(ctx context.Context, adapterID string, request sdk.Dete
 		return sdk.DetectionResult{}, err
 	}
 	if !validStatus(result.Status) {
+		registered.setStatus(AdapterStatusUnavailable)
 		return sdk.DetectionResult{}, fmt.Errorf("%w: adapter returned an invalid detection status", ErrPluginUnavailable)
 	}
 	return result, nil
@@ -213,6 +251,7 @@ func (m *Manager) CheckCompatibility(ctx context.Context, adapterID string, requ
 		return sdk.CompatibilityResult{}, err
 	}
 	if !validStatus(result.Status) {
+		registered.setStatus(AdapterStatusUnavailable)
 		return sdk.CompatibilityResult{}, fmt.Errorf("%w: adapter returned an invalid compatibility status", ErrPluginUnavailable)
 	}
 	return result, nil
@@ -226,9 +265,22 @@ func (m *Manager) InspectResources(ctx context.Context, adapterID string, reques
 	if !registered.manifest.Capabilities.InspectResources {
 		return sdk.ResourceInspection{}, ErrCapabilityUnavailable
 	}
+	if !slices.Contains(registered.manifest.ResourceFormats, request.Format) {
+		return sdk.ResourceInspection{}, fmt.Errorf("%w: %q", ErrResourceFormatUnavailable, request.Format)
+	}
 	var result sdk.ResourceInspection
 	if err := m.invoke(ctx, registered, "InspectResources", request, &result); err != nil {
 		return sdk.ResourceInspection{}, err
+	}
+	if result.Resources == nil {
+		registered.setStatus(AdapterStatusUnavailable)
+		return sdk.ResourceInspection{}, fmt.Errorf("%w: adapter response is missing the resources array", ErrPluginUnavailable)
+	}
+	for _, resource := range result.Resources {
+		if strings.TrimSpace(resource.ID) == "" {
+			registered.setStatus(AdapterStatusUnavailable)
+			return sdk.ResourceInspection{}, fmt.Errorf("%w: adapter response contains a resource without an ID", ErrPluginUnavailable)
+		}
 	}
 	return result, nil
 }
@@ -248,18 +300,41 @@ func (m *Manager) invoke(ctx context.Context, registered *plugin, method string,
 	case registered.slots <- struct{}{}:
 		defer func() { <-registered.slots }()
 	case <-callCtx.Done():
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		registered.setStatus(AdapterStatusUnavailable)
 		return m.callContextError(ctx, callCtx, registered.manifest.ID, method, "waiting for adapter process")
 	}
 
 	stderr, err := runRPC(callCtx, registered, method, params, result)
 	if err == nil {
+		registered.setStatus(AdapterStatusAvailable)
 		return nil
 	}
 	if callCtx.Err() != nil {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		registered.setStatus(AdapterStatusUnavailable)
 		return m.callContextError(ctx, callCtx, registered.manifest.ID, method, err.Error())
 	}
+	registered.setStatus(AdapterStatusUnavailable)
 	m.logger.ErrorContext(ctx, "adapter RPC failed", "adapter_id", registered.manifest.ID, "method", method, "error", err, "stderr", stderr)
 	return fmt.Errorf("%w: %v", ErrPluginUnavailable, err)
+}
+
+func manifestsEqual(left, right sdk.AdapterManifest) bool {
+	return left.ManifestVersion == right.ManifestVersion &&
+		left.APIVersion == right.APIVersion &&
+		left.SDKVersion == right.SDKVersion &&
+		left.ID == right.ID &&
+		left.Name == right.Name &&
+		left.Version == right.Version &&
+		left.Executable == right.Executable &&
+		left.Capabilities == right.Capabilities &&
+		slices.Equal(left.InputTypes, right.InputTypes) &&
+		slices.Equal(left.ResourceFormats, right.ResourceFormats)
 }
 
 func (m *Manager) callContextError(parent, callCtx context.Context, adapterID, method, detail string) error {

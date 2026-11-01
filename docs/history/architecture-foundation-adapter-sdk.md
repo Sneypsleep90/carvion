@@ -1,6 +1,6 @@
 # Исторический архитектурный снимок: Foundation и Adapter SDK
 
-> Этот документ сохраняет обзор первоначальной реализации до Step 1 Desktop-First Core Refactoring. Он не описывает текущие package boundaries. Актуальная архитектура находится в [`../ARCHITECTURE.md`](../ARCHITECTURE.md).
+> Этот документ сохраняет обзор первоначальной реализации до Step 1 Desktop-First Core Refactoring. Он не описывает текущие package boundaries. Актуальная архитектура находится в [`../ARCHITECTURE.md`](../architecture.md).
 
 ## Исходная схема
 

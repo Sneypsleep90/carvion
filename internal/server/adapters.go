@@ -47,11 +47,15 @@ type adapterCapabilitiesResponse struct {
 }
 
 type adapterInfoResponse struct {
-	ID           string                      `json:"id"`
-	Name         string                      `json:"name"`
-	Version      string                      `json:"version"`
-	APIVersion   string                      `json:"api_version"`
-	Capabilities adapterCapabilitiesResponse `json:"capabilities"`
+	ID              string                      `json:"id"`
+	Name            string                      `json:"name"`
+	Version         string                      `json:"version"`
+	APIVersion      string                      `json:"api_version"`
+	SDKVersion      string                      `json:"sdk_version"`
+	Capabilities    adapterCapabilitiesResponse `json:"capabilities"`
+	InputTypes      []string                    `json:"input_types"`
+	ResourceFormats []string                    `json:"resource_formats"`
+	Status          domain.AdapterStatus        `json:"status"`
 }
 
 type compatibilityResultAPIResponse struct {
@@ -82,7 +86,8 @@ func adaptersListHandler(core Core) http.HandlerFunc {
 		adapters := make([]adapterInfoResponse, 0, len(items))
 		for _, item := range items {
 			adapters = append(adapters, adapterInfoResponse{
-				ID: item.ID, Name: item.Name, Version: item.Version, APIVersion: item.APIVersion,
+				ID: item.ID, Name: item.Name, Version: item.Version, APIVersion: item.APIVersion, SDKVersion: item.SDKVersion,
+				InputTypes: append([]string{}, item.InputTypes...), ResourceFormats: append([]string{}, item.ResourceFormats...), Status: item.Status,
 				Capabilities: adapterCapabilitiesResponse{
 					Detect:             item.Capabilities.Detect,
 					CheckCompatibility: item.Capabilities.CheckCompatibility,
@@ -154,6 +159,8 @@ func writeApplicationError(w http.ResponseWriter, err error) {
 		writeAPIError(w, http.StatusNotFound, "adapter_not_found", "adapter is not registered")
 	case errors.Is(err, domain.ErrCapabilityUnavailable):
 		writeAPIError(w, http.StatusUnprocessableEntity, "capability_unavailable", "adapter does not support compatibility checks")
+	case errors.Is(err, domain.ErrResourceFormatUnavailable):
+		writeAPIError(w, http.StatusUnprocessableEntity, "resource_format_unavailable", "adapter does not support this resource format")
 	case errors.Is(err, domain.ErrAdapterTimeout):
 		writeAPIError(w, http.StatusServiceUnavailable, "adapter_unavailable", "adapter could not complete the compatibility check")
 	case errors.Is(err, domain.ErrCatalogUnavailable):

@@ -14,12 +14,23 @@ type AdapterCapabilities struct {
 	InspectResources   bool
 }
 
+type AdapterStatus string
+
+const (
+	AdapterStatusAvailable   AdapterStatus = "available"
+	AdapterStatusUnavailable AdapterStatus = "unavailable"
+)
+
 type AdapterInfo struct {
-	ID           string
-	Name         string
-	Version      string
-	APIVersion   string
-	Capabilities AdapterCapabilities
+	ID              string
+	Name            string
+	Version         string
+	APIVersion      string
+	SDKVersion      string
+	Capabilities    AdapterCapabilities
+	InputTypes      []string
+	ResourceFormats []string
+	Status          AdapterStatus
 }
 
 type VehicleIdentity struct {

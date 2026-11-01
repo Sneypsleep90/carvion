@@ -63,6 +63,7 @@ func (a *DemoAdapter) GetInfo(ctx context.Context) (sdk.AdapterManifest, error) 
 	return sdk.AdapterManifest{
 		ManifestVersion: sdk.ManifestVersion,
 		APIVersion:      sdk.APIVersion,
+		SDKVersion:      sdk.SDKVersion,
 		ID:              "adapter-android-demo",
 		Name:            "CARVION Synthetic Android Demo",
 		Version:         "0.1.0",
@@ -72,6 +73,12 @@ func (a *DemoAdapter) GetInfo(ctx context.Context) (sdk.AdapterManifest, error) 
 			CheckCompatibility: true,
 			InspectResources:   true,
 		},
+		InputTypes: []sdk.AdapterInputType{
+			sdk.InputVehicleObservationJSON,
+			sdk.InputCompatibilityProfile,
+			sdk.InputResourceDocument,
+		},
+		ResourceFormats: []string{"android-strings-xml"},
 	}, nil
 }
 

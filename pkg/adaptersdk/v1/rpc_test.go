@@ -11,13 +11,72 @@ import (
 type testAdapter struct {
 	getInfoErr       error
 	invalidDetection bool
+	sdkVersion       string
 }
 
 func (a testAdapter) GetInfo(context.Context) (AdapterManifest, error) {
 	if a.getInfoErr != nil {
 		return AdapterManifest{}, a.getInfoErr
 	}
-	return AdapterManifest{ID: "test-adapter", APIVersion: APIVersion}, nil
+	sdkVersion := a.sdkVersion
+	if sdkVersion == "" {
+		sdkVersion = SDKVersion
+	}
+	return AdapterManifest{
+		ManifestVersion: ManifestVersion,
+		APIVersion:      APIVersion,
+		SDKVersion:      sdkVersion,
+		ID:              "test-adapter",
+		Name:            "Test Adapter",
+		Version:         "1.0.0",
+		Executable:      "bin/test-adapter",
+		Capabilities: AdapterCapabilities{
+			Detect:             true,
+			CheckCompatibility: true,
+			InspectResources:   true,
+		},
+		InputTypes: []AdapterInputType{
+			InputVehicleObservationJSON,
+			InputCompatibilityProfile,
+			InputResourceDocument,
+		},
+		ResourceFormats: []string{"test-xml"},
+	}, nil
+}
+
+func (a testAdapter) manifest() AdapterManifest {
+	manifest, _ := a.GetInfo(context.Background())
+	return manifest
+}
+
+func TestServeRejectsManifestFromUnsupportedSDKMajor(t *testing.T) {
+	var output strings.Builder
+	request := `{"jsonrpc":"2.0","id":"1","method":"GetInfo","params":{}}` + "\n"
+
+	if err := Serve(context.Background(), strings.NewReader(request), &output, testAdapter{sdkVersion: "2.0.0"}); err != nil {
+		t.Fatalf("Serve() error = %v", err)
+	}
+	var response RPCResponse
+	if err := json.Unmarshal([]byte(output.String()), &response); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if response.Error == nil || response.Error.Code != CodeAdapterFailure {
+		t.Fatalf("response error = %+v, want adapter failure for unsupported SDK major", response.Error)
+	}
+}
+
+func TestValidateManifestRequiresInputsAndResourceFormats(t *testing.T) {
+	manifest := testAdapter{}.manifest()
+	manifest.InputTypes = []AdapterInputType{InputVehicleObservationJSON, InputCompatibilityProfile}
+	if err := ValidateManifest(manifest); err == nil || !strings.Contains(err.Error(), "resource document input") {
+		t.Fatalf("ValidateManifest() error = %v, want required resource document input", err)
+	}
+
+	manifest = testAdapter{}.manifest()
+	manifest.ResourceFormats = []string{}
+	if err := ValidateManifest(manifest); err == nil || !strings.Contains(err.Error(), "resource format") {
+		t.Fatalf("ValidateManifest() error = %v, want required resource format", err)
+	}
 }
 
 func (a testAdapter) Detect(_ context.Context, request DetectRequest) (DetectionResult, error) {

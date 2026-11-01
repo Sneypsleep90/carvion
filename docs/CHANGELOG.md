@@ -2,6 +2,26 @@
 
 Здесь фиксируются фактические технические изменения; будущие планы приведены в [ROADMAP.md](ROADMAP.md).
 
+## 2026-11-01 — Step 3: Adapter SDK & Plugin Manager
+
+- Сохранён SDK API `v1`; manifest обновлён до schema v2 с `sdk_version`, `input_types` и `resource_formats`, включая строгую проверку SemVer и capability declarations.
+- Plugin Manager регистрирует только локальные trusted packages с точным `GetInfo`, маршрутизирует отдельные JSON-RPC процессы по выбранному ID, проверяет форматы ресурсов, ограничивает deadline/frames/concurrency и отражает последний runtime status.
+- Усилена обработка JSON-RPC: неизвестные поля, лишние JSON values/frames, malformed result, RPC error и process failure отклоняются.
+- Desktop Adapters показывает SDK/API/adapter versions, capabilities, declared inputs/formats и status. Diagnostics/Localization выбирают адаптеры, совместимые с требуемой операцией и форматом.
+- Обновлён manifest `adapter-android-demo`; он остаётся синтетическим и не заявляет поддержку реальных платформ.
+- Добавлены SDK, protocol, adapter-authoring и security документы; фактические проверки записаны в [TESTING.md](TESTING.md).
+
+## 2026-11-01 — Wails Desktop Application Foundation
+
+- Добавлен отдельный nested Go module `desktop/` для Wails v3.0.0 host; root Go API module остался без Wails dependency.
+- Добавлен `ApplicationService` как Wails lifecycle service: он создаёт local Core runtime, делегирует Go use cases напрямую и закрывает PostgreSQL pool при завершении.
+- Добавлены generated Wails TypeScript bindings и `DesktopBackend`; React UI не вызывает REST API и не обращается к PostgreSQL.
+- Создана CARVION Studio оболочка с восемью разделами, тёмной темой, responsive рабочей областью, loading/empty/error states, Tailwind CSS 4, UI primitives и Lucide.
+- Реализованы Dashboard, Vehicles catalog, Diagnostics compatibility check и read-only Localization XML inspection над synthetic demo adapter. Placeholder sections явно отмечают отсутствующую функциональность.
+- Настроена Apple Silicon Wails bundle сборка. Minimum macOS согласован с Go toolchain на 13.0; локальный package подписывается ad-hoc.
+- Добавлены Go lifecycle service tests, Playwright E2E (3 сценария) и desktop Make targets.
+- Обновлена документация состояния и команд; подробности проверок и ограничения см. в [TESTING.md](TESTING.md) и [DESKTOP.md](DESKTOP.md).
+
 ## 2026-11-01 — Подготовка публикации репозитория
 
 - Go module и импорты переведены с временного `carvion.local` на `github.com/Sneypsleep90/carvion`.

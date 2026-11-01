@@ -8,18 +8,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	sdk "github.com/Sneypsleep90/carvion/pkg/adaptersdk/v1"
 )
 
 const maxManifestBytes = 64 << 10
-
-var (
-	adapterIDPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,63}$`)
-	semverPattern    = regexp.MustCompile(`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$`)
-)
 
 func readManifest(pluginDirectory string) (sdk.AdapterManifest, error) {
 	path := filepath.Join(pluginDirectory, "manifest.json")
@@ -51,28 +45,7 @@ func readManifest(pluginDirectory string) (sdk.AdapterManifest, error) {
 }
 
 func validateManifest(manifest sdk.AdapterManifest) error {
-	if manifest.ManifestVersion != sdk.ManifestVersion {
-		return fmt.Errorf("unsupported manifest version %d", manifest.ManifestVersion)
-	}
-	if manifest.APIVersion != sdk.APIVersion {
-		return fmt.Errorf("unsupported adapter API version %q", manifest.APIVersion)
-	}
-	if !adapterIDPattern.MatchString(manifest.ID) {
-		return errors.New("adapter ID must contain lowercase letters, digits, and hyphens")
-	}
-	if name := strings.TrimSpace(manifest.Name); name == "" || len(name) > 128 {
-		return errors.New("adapter name must be between 1 and 128 characters")
-	}
-	if !semverPattern.MatchString(manifest.Version) {
-		return errors.New("adapter version must use semantic versioning")
-	}
-	if strings.TrimSpace(manifest.Executable) == "" {
-		return errors.New("adapter executable is required")
-	}
-	if !manifest.Capabilities.Detect && !manifest.Capabilities.CheckCompatibility && !manifest.Capabilities.InspectResources {
-		return errors.New("adapter must declare at least one capability")
-	}
-	return nil
+	return sdk.ValidateManifest(manifest)
 }
 
 func resolveExecutable(pluginDirectory, executable string) (string, error) {

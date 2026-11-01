@@ -1,6 +1,7 @@
 {
-  "manifest_version": 1,
+  "manifest_version": 2,
   "api_version": "v1",
+  "sdk_version": "1.0.0",
   "id": "adapter-android-demo",
   "name": "CARVION Synthetic Android Demo",
   "version": "0.1.0",
@@ -9,5 +10,13 @@
     "detect": true,
     "check_compatibility": true,
     "inspect_resources": true
-  }
+  },
+  "input_types": [
+    "vehicle-observation-json",
+    "compatibility-profile",
+    "resource-document"
+  ],
+  "resource_formats": [
+    "android-strings-xml"
+  ]
 }

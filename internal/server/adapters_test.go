@@ -34,6 +34,7 @@ func (s *testAdapterService) CheckCompatibility(_ context.Context, adapterID str
 func TestListAdaptersReturnsPublicAdapterSummaries(t *testing.T) {
 	service := &testAdapterService{items: []domain.AdapterInfo{{
 		ID: "adapter-android-demo", Name: "Synthetic Demo", Version: "0.1.0", APIVersion: "v1",
+		SDKVersion: "1.0.0", InputTypes: []string{"compatibility-profile"}, ResourceFormats: []string{}, Status: domain.AdapterStatusAvailable,
 		Capabilities: domain.AdapterCapabilities{CheckCompatibility: true},
 	}}}
 	handler := NewHandler(nil, nil, service)
@@ -46,6 +47,9 @@ func TestListAdaptersReturnsPublicAdapterSummaries(t *testing.T) {
 		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusOK)
 	}
 	if !strings.Contains(recorder.Body.String(), `"id":"adapter-android-demo"`) ||
+		!strings.Contains(recorder.Body.String(), `"sdk_version":"1.0.0"`) ||
+		!strings.Contains(recorder.Body.String(), `"input_types":["compatibility-profile"]`) ||
+		!strings.Contains(recorder.Body.String(), `"status":"available"`) ||
 		strings.Contains(recorder.Body.String(), "executable") {
 		t.Errorf("body = %s, want public adapter summary without executable path", recorder.Body.String())
 	}

@@ -34,7 +34,9 @@ func (g *Gateway) List(ctx context.Context) ([]domain.AdapterInfo, error) {
 	result := make([]domain.AdapterInfo, 0, len(items))
 	for _, item := range items {
 		result = append(result, domain.AdapterInfo{
-			ID: item.ID, Name: item.Name, Version: item.Version, APIVersion: item.APIVersion,
+			ID: item.ID, Name: item.Name, Version: item.Version, APIVersion: item.APIVersion, SDKVersion: item.SDKVersion,
+			InputTypes: inputTypes(item.InputTypes), ResourceFormats: append([]string{}, item.ResourceFormats...),
+			Status: domain.AdapterStatus(item.Status),
 			Capabilities: domain.AdapterCapabilities{
 				Detect:             item.Capabilities.Detect,
 				CheckCompatibility: item.Capabilities.CheckCompatibility,
@@ -97,13 +99,23 @@ func (g *Gateway) InspectResources(ctx context.Context, adapterID string, reques
 
 func adapterInfo(manifest sdk.AdapterManifest) domain.AdapterInfo {
 	return domain.AdapterInfo{
-		ID: manifest.ID, Name: manifest.Name, Version: manifest.Version, APIVersion: manifest.APIVersion,
+		ID: manifest.ID, Name: manifest.Name, Version: manifest.Version, APIVersion: manifest.APIVersion, SDKVersion: manifest.SDKVersion,
+		InputTypes: inputTypes(manifest.InputTypes), ResourceFormats: append([]string{}, manifest.ResourceFormats...),
+		Status: domain.AdapterStatusAvailable,
 		Capabilities: domain.AdapterCapabilities{
 			Detect:             manifest.Capabilities.Detect,
 			CheckCompatibility: manifest.Capabilities.CheckCompatibility,
 			InspectResources:   manifest.Capabilities.InspectResources,
 		},
 	}
+}
+
+func inputTypes(inputTypes []sdk.AdapterInputType) []string {
+	result := make([]string, 0, len(inputTypes))
+	for _, inputType := range inputTypes {
+		result = append(result, string(inputType))
+	}
+	return result
 }
 
 func mapManagerError(err error) error {
@@ -114,6 +126,8 @@ func mapManagerError(err error) error {
 		return fmt.Errorf("%w: %v", domain.ErrAdapterNotFound, err)
 	case errors.Is(err, pluginmanager.ErrCapabilityUnavailable):
 		return fmt.Errorf("%w: %v", domain.ErrCapabilityUnavailable, err)
+	case errors.Is(err, pluginmanager.ErrResourceFormatUnavailable):
+		return fmt.Errorf("%w: %v", domain.ErrResourceFormatUnavailable, err)
 	case errors.Is(err, pluginmanager.ErrPluginTimeout):
 		return fmt.Errorf("%w: %v", domain.ErrAdapterTimeout, err)
 	default:

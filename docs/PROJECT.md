@@ -2,15 +2,17 @@
 
 ## Назначение
 
-CARVION — целевая **Desktop-платформа** для анализа и локализации программных ресурсов автомобильных мультимедийных систем через подключаемые адаптеры. Основное ядро пишется на Go; пользовательский интерфейс планируется на React и TypeScript внутри Wails 3. PostgreSQL указан как основная БД, JSON-RPC — как транспорт между ядром и отдельными процессами адаптеров.
+CARVION — **Desktop-платформа** для анализа и локализации программных ресурсов автомобильных мультимедийных систем через подключаемые адаптеры. Go Core отделён от транспорта; CARVION Studio использует Wails 3 и React/TypeScript, PostgreSQL — основной dev catalog store, JSON-RPC — транспорт к отдельным локальным процессам адаптеров.
 
 ## Текущее состояние
 
-**Реализовано и проверено:** transport-independent Go Core (`domain`, `application`, `infrastructure`), composition root, repository ports, PostgreSQL read repository для исходного каталога, adapter bridge, Go HTTP API поверх Core, Adapter SDK v1, локальный Plugin Manager и `adapter-android-demo` с синтетическими данными. Есть unit/service tests, PostgreSQL repository integration test и HTTP tests.
+**Реализовано и проверено:** transport-independent Go Core (`domain`, `application`, `infrastructure`), composition root и repository ports; PostgreSQL read repository; HTTP API; Adapter SDK API v1 с manifest schema v2, локальный Plugin Manager и synthetic `adapter-android-demo`; Wails 3 app с React/TypeScript UI, typed direct bindings к Go Core и lifecycle-managed локальным runtime. Desktop показывает возможности/статус адаптеров и позволяет выбрать adapter ID для synthetic calls. Актуальные test results см. в [TESTING.md](TESTING.md).
 
-**Не реализовано:** Desktop shell и Wails bindings, React UI, Hub-backed remote repository и Hub authentication, полноценные CRUD services, localization workflow, simulator, реальные автомобильные адаптеры, deployment и коммерческий Hub.
+**Реализовано частично:** Desktop экраны каталога/диагностики и read-only XML inspection; отдельные UI разделы пока placeholders.
 
-**Неизвестно / требует исследования:** локальная модель эксплуатации PostgreSQL в Desktop-продукте, достоверность и допустимость будущих источников данных, требования упаковки для целевых ОС.
+**Не реализовано:** Hub-backed remote repository и Hub authentication, полноценные CRUD services, localization editing/export workflow, simulator, реальные автомобильные адаптеры, deployment и коммерческий Hub.
+
+**Неизвестно / требует исследования:** production модель хранения/авторизации Desktop (локальная PostgreSQL либо Hub), подписание и notarization приложения, достоверность и допустимость будущих источников данных.
 
 ## Цели
 
@@ -26,4 +28,4 @@ CARVION — целевая **Desktop-платформа** для анализа 
 
 ## Core и хранилище
 
-`application.Service` вызывается из Go и не требует HTTP transport. Для разработки `composition.NewLocal` создаёт PostgreSQL connection pool, read-only каталог repository и существующий локальный Plugin Manager. Wails ещё не подключён. Repository ports позволяют добавить Hub-backed реализации; текущая удалённая реализация и механизм авторизации не существуют.
+`application.Service` вызывается из Go и не требует HTTP transport. Wails facade в `desktop/` создаёт runtime через `composition.NewLocal`, передаёт Wails lifecycle context и закрывает pool при shutdown. Repository ports позволяют добавить Hub-backed реализации; удалённая реализация и auth отсутствуют. Студия сейчас требует локально настроенный PostgreSQL `DATABASE_URL` и не подключается к автомобилю.

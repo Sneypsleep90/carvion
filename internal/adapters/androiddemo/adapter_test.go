@@ -147,8 +147,11 @@ func TestGetInfoReturnsVersionedManifest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetInfo() error = %v", err)
 	}
-	if manifest.APIVersion != sdk.APIVersion || manifest.ManifestVersion != sdk.ManifestVersion {
-		t.Errorf("manifest versions = (%q, %d), want (%q, %d)", manifest.APIVersion, manifest.ManifestVersion, sdk.APIVersion, sdk.ManifestVersion)
+	if manifest.APIVersion != sdk.APIVersion || manifest.ManifestVersion != sdk.ManifestVersion || manifest.SDKVersion != sdk.SDKVersion {
+		t.Errorf("manifest versions = (%q, %d, %q), want (%q, %d, %q)", manifest.APIVersion, manifest.ManifestVersion, manifest.SDKVersion, sdk.APIVersion, sdk.ManifestVersion, sdk.SDKVersion)
+	}
+	if len(manifest.InputTypes) != 3 || len(manifest.ResourceFormats) != 1 || manifest.ResourceFormats[0] != "android-strings-xml" {
+		t.Errorf("manifest capabilities metadata = inputs %v, formats %v; want declared SDK inputs and Android XML format", manifest.InputTypes, manifest.ResourceFormats)
 	}
 }
 
