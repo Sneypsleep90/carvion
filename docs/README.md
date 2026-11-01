@@ -29,6 +29,11 @@
 | [simulator/OVERVIEW.md](simulator/OVERVIEW.md) | Границы Simulator, Core flow, статусы и package verification |
 | [simulator/SCENARIOS.md](simulator/SCENARIOS.md) | Synthetic profiles и ожидаемые результаты сценариев |
 | [simulator/TEST_RESULTS.md](simulator/TEST_RESULTS.md) | Фактические проверки Simulator и их ограничения |
+| [deployment/ARCHITECTURE.md](deployment/ARCHITECTURE.md) | Core orchestration, provider boundary, state machine и persistence |
+| [deployment/PREFLIGHT.md](deployment/PREFLIGHT.md) | Production readiness аудит и проверки Test/Production modes |
+| [deployment/SAFETY.md](deployment/SAFETY.md) | Fail-closed гарантии и границы обещаний |
+| [deployment/RECOVERY.md](deployment/RECOVERY.md) | Отказы, cancellation и отсутствие production recovery |
+| [deployment/TESTING.md](deployment/TESTING.md) | Покрытие Deployment и фактические результаты |
 | [research/README.md](research/README.md) | Индекс технических исследований платформ |
 | [research/geely/OVERVIEW.md](research/geely/OVERVIEW.md) | Реализованный файловый Research Adapter и его ограничения |
 | [research/geely/PLATFORMS.md](research/geely/PLATFORMS.md) | Факты и неизвестные по платформам |

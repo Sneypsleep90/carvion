@@ -12,9 +12,11 @@ Simulator также реализован и проверен: он запуск
 
 **Geely Research Adapter реализован как исследовательский каркас:** Desktop принимает пользовательский versioned JSON-профиль и отдельный XML/JSON ресурс, показывает значения как `из файла / не проверено`, анализирует ресурсы общим Localization parser, передаёт их в Localization Engine по явному действию и экспортирует очищенный диагностический отчёт. Поддержка Geely не заявлена: точные конфигурации 2022–2024 неизвестны, а каталог совместимости пуст. Источники и границы утверждений описаны в [docs/research/geely/](research/geely/OVERVIEW.md).
 
-**Реализовано частично:** Desktop экраны каталога и диагностики; Language Packages и Operation History пока placeholders. Сборка localization package доступна на экранах Localization и Simulator.
+**Реализовано и проверено в синтетическом окружении:** Deployment Engine хранит jobs/events в PostgreSQL, проверяет CARVION ZIP integrity, выполняет preflight и запускает только synthetic provider. Desktop показывает проверки, результаты, прогресс и сохранённую историю. Production Mode безусловно блокируется в Go Core; PostgreSQL integration suite прогнан на отдельной временной БД. Проверок на автомобиле/физическом стенде не проводилось. Подробности и фактические ограничения — в [deployment docs](deployment/ARCHITECTURE.md).
 
-**Не реализовано:** Hub-backed remote repository и Hub authentication, реальные автомобильные адаптеры, deployment и коммерческий Hub.
+**Реализовано частично:** Desktop экраны каталога и диагностики; отдельный Language Packages screen и Operation History screen остаются placeholders. История Deployment jobs доступна на экране Развёртывание. Сборка localization package доступна на экранах Localization, Simulator и перед Deployment preflight.
+
+**Не реализовано:** Hub-backed remote repository и Hub authentication, реальные автомобильные адаптеры и production deployment/installation. CARVION Hub и коммерческая платформа запланированы.
 
 **Неизвестно / требует исследования:** production модель хранения/авторизации Desktop (локальная PostgreSQL либо Hub), подписание и notarization приложения, достоверность и допустимость будущих источников данных.
 

@@ -26,3 +26,5 @@ Plugin Manager загружает только директории из явн�
 ## Не реализовано
 
 Подпись и provenance package, OS sandbox, network policy, privilege separation и Hub-based distribution требуют отдельного threat model и являются будущими задачами. Не использовать SDK для обхода защит, несанкционированного доступа к автомобилю или установки firmware.
+
+Deployment provider — отдельная Core boundary, а не adapter SDK operation. Текущие manifests и JSON-RPC методы не предоставляют установки; synthetic provider не имеет `Install` capability и не получает PostgreSQL или hardware access.

@@ -28,9 +28,15 @@
 
 ## Данные и безопасность
 
+- **Production Deployment заблокирован:** нет подтверждённой production платформы, exact compatibility rule, разрешённого install method, result verification/recovery procedure и bench evidence. В Core задано `productionDeploymentEnabled = false`; включить режим настройкой UI нельзя.
+- **Deployment PostgreSQL integration зависит от отдельной test DB:** полный integration suite был выполнен на временной изолированной PostgreSQL 18 базе 2026-11-02; локальная/dev БД не использовалась. Обычный `make test-integration` требует заранее заданный `CARVION_TEST_DATABASE_URL`.
+- **Локальный audit не защищён от владельца БД:** event rows append-only через SQL trigger, но privileged PostgreSQL administrator или владелец процесса может изменить локальную среду; криптографическая внешняя audit attestation отсутствует.
+- **Package integrity не равна authenticity:** SHA-256 и внутренние checksums не удостоверяют источник/подпись CARVION package.
+- **Production recovery отсутствует:** synthetic recovery check не является backup или rollback и не применим к автомобилю.
+
 - **Реальных vehicle compatibility records нет:** demo profiles остаются synthetic. Geely Research Adapter анализирует только выбранные пользователем файлы; его exact compatibility catalog пуст и поддержка Geely не заявлена.
 - **Geely configurations 2022–2024 неизвестны:** публичные Geely материалы, собранные в `docs/research/geely/EVIDENCE.md`, не дают проверенных firmware build IDs, hardware revisions и полного market/year/platform tuple. Любое неполное/неизвестное сочетание возвращает `unknown`.
-- **Geely PostgreSQL integration check не выполнен в текущей среде:** integration test добавлен, но `CARVION_TEST_DATABASE_URL` не задан. Результат unit/fake-repository tests не доказывает round-trip на PostgreSQL.
+- **Geely/PostgreSQL integration:** тесты на текущем этапе прошли в полном integration suite на временной PostgreSQL 18 базе с миграциями 00001–00004. Каждый отдельный запуск `make test-integration` всё ещё требует `CARVION_TEST_DATABASE_URL`.
 - **Нет firmware deployment:** установка, изменение и запись firmware отсутствуют.
 - **Simulator ограничен тестовыми fixtures:** profiles, строки и переводы демонстрационные; event log хранится только в текущем результате, а настоящий Wails native UI не имеет автоматизированного UI-теста.
 - **Simulator workflow создаёт localization data:** локальные тестовые project/package записи сохраняются в существующих localization tables; отдельной истории прогонов нет.

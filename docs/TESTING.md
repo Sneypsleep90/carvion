@@ -67,6 +67,12 @@
 | 2026-11-01, Step 6 | `make desktop-build` | Пройдено: Wails CLI v3.0.0 пересоздал bindings и собрал/подписал ad-hoc macOS `.app`; codesign verification прошёл. npm audit — 0 vulnerabilities; остаётся предупреждение allow-scripts для `fsevents`. |
 | 2026-11-01, Step 6 | `go test -tags=integration ./internal/core/infrastructure/postgres -run '^$' -count=1` | Пройдено только компилирование integration package/test. Geely PostgreSQL test фактически не запускался: `CARVION_TEST_DATABASE_URL` не задан. |
 | 2026-11-01, Step 6 | `make desktop-run` / native UI smoke | Не запускались: в worktree отсутствуют `.env` и `DATABASE_URL`; `docker compose ps` сообщил, что compose DB credentials не заданы. Wails packaging и Wails facade unit tests выполнены. |
+| 2026-11-02, Step 7 | `make desktop-test` | Пройдено: root Go suite, Desktop Go suite, TypeScript strict check, 18 Playwright E2E tests и production Vite build. E2E использует synthetic backend; Wails browser-preview предупреждение ожидаемо. |
+| 2026-11-02, Step 7 | `make test-integration` | Пройдено на отдельном временном PostgreSQL 18 container с migrations 00001–00004; полный integration-tagged Go suite, включая deployment jobs/events, прошёл. Container удалён после проверки, dev DB не использовалась. |
+| 2026-11-02, Step 7 | `make lint`, `make build` | Пройдены: gofmt/vet, API binary и оба локальных adapter executables собраны. |
+| 2026-11-02, Step 7 | `make desktop-build` | Пройдено: Wails CLI v3.0.0 собрал macOS arm64 `.app`; ad-hoc signing verification прошёл. npm audit — 0 vulnerabilities; остаётся предупреждение allow-scripts для optional `fsevents`. |
+| 2026-11-02, Step 7 | Geely subprocess test под полной нагрузкой | Первый integration run выявил test-only 3s startup timeout на `GetInfo`; он увеличен до 10s, production RPC timeout не менялся. Полный integration suite после изменения прошёл. |
+| 2026-11-02, Step 7 | Physical hardware / native UI smoke | Не выполнялись. Synthetic E2E или package verification не подтверждают работу на автомобиле или стенде. |
 
 ## Команды разработчика
 

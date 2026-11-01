@@ -160,3 +160,31 @@
 - **Решение:** `CompatibilityRequest.vehicle_profile` — необязательный `json.RawMessage`, а manifest может объявить `vehicle-research-profile-json`. Обычные compatibility requests сохраняют прежнюю форму.
 - **Причина:** базовые identity/hardware/firmware поля не содержат year, region, trim и OS tuple, нужные exact Geely rule.
 - **Альтернативы:** расширить общие доменные поля или добавить новый метод/API major — сильнее меняют существующий контракт и не нужны для одного versioned profile.
+
+## D-022 — Production Deployment остаётся заблокированным, пока нет обязательных доказательств
+
+- **Статус:** реализовано в Step 7; `productionDeploymentEnabled = false` в Core.
+- **Решение:** Production readiness audit сохраняется как `blocked`, если нет подтверждённой платформы, exact compatibility, разрешённого install method, result verification, recovery procedure и bench evidence. Конфигурация/UI не может включить execution.
+- **Причина:** в проекте нет проверенных installation/recovery данных ни для одной реальной платформы; Geely exact catalog пуст. Блокировка в Core предотвращает обход интерфейсного состояния.
+- **Альтернативы:** включать Production по флагу, считать synthetic profile достаточным или продолжать при `unknown` — не дают evidence для безопасного реального действия.
+
+## D-023 — Deployment jobs и progress events хранятся в PostgreSQL
+
+- **Статус:** реализовано в Step 7; PostgreSQL integration execution требует отдельной test DB.
+- **Решение:** сохранять job snapshot вместе с упорядоченным append-only event log. Изменение состояния и соответствующее событие пишутся одной транзакцией; UI восстанавливает состояние через Core bindings.
+- **Причина:** постоянная история нужна для разбора blocked/failure/cancel состояний после перезапуска.
+- **Альтернативы:** session-only log не переживает перезапуск; отдельный event broker/service неоправданны для local Desktop scope.
+
+## D-024 — Installation capability отделена от adapter SDK
+
+- **Статус:** реализовано в Step 7: Core provider interface не содержит `Install`, подключён только synthetic simulator.
+- **Решение:** Deployment capability выражается отдельным Core provider contract; текущий provider объявляет `CanInstall=false`, а SDK JSON-RPC contract не получает install method.
+- **Причина:** plugin discovery/compatibility не должны автоматически давать процессу право менять устройство.
+- **Альтернативы:** добавить install RPC всем адаптерам или считать `CheckCompatibility` разрешением записи смешивает проверку данных с опасной операцией.
+
+## D-025 — SHA-256 verification не трактуется как authenticity
+
+- **Статус:** реализовано в package verifier и документировано в Step 7.
+- **Решение:** verifier ограничивает ZIP structure и проверяет manifest/checksums/hash; UI/docs явно указывают, что digest не доказывает издателя, подпись или OEM происхождение.
+- **Причина:** CARVION language package не является OEM firmware, а подписанная provenance infrastructure отсутствует.
+- **Альтернативы:** называть digest проверкой подлинности создаёт неподтверждённую гарантию.

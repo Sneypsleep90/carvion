@@ -47,7 +47,7 @@ Wails service facade в `desktop/` вызывает `application.Service` нап
 | `internal/simulator/` | Embedded synthetic profile catalog и Android XML fixture, общие для Core и demo adapter |
 | `internal/` | Также config, DB pool, HTTP transport, Plugin Manager, demo adapter и тесты |
 | `adapters/` | Manifests Android demo и Geely research; `bin/` содержит generated executables после build |
-| `db/migrations/` | Три Goose migrations, включая проекты и данные Localization Engine |
+| `db/migrations/` | Четыре Goose migrations: catalog, Adapter SDK, Localization Engine и Deployment audit |
 | `docs/` | Существующие заметки SDK/архитектуры и новая проектная документация |
 | `.github/workflows/ci.yml` | Go format check, vet, unit tests и build |
 | `.idea/` | Локальные IDE project settings; не часть runtime architecture |
@@ -93,7 +93,8 @@ internal/composition.NewLocal → application.Service
   ├── internal/localization → XML/JSON/CSV/validation/ZIP
   ├── internal/simulator → whitelisted synthetic profiles/resources
   ├── Geely research use cases → adapterbridge → Plugin Manager → Geely JSON-RPC subprocess
-  └── AdapterGateway → Plugin Manager → demo JSON-RPC subprocess
+  ├── AdapterGateway → Plugin Manager → demo JSON-RPC subprocess
+  └── DeploymentService → package verifier → PostgreSQL jobs/events → synthetic-only provider
 
 cmd/carvion-api → HTTP handlers → same Core (separate Hub/API transport)
 ```
@@ -101,6 +102,8 @@ cmd/carvion-api → HTTP handlers → same Core (separate Hub/API transport)
 Wails bindings и HTTP handlers вызывают application services; Core не вызывается через локальный REST endpoint. Для разработки composition использует PostgreSQL. Application зависит от repository ports, поэтому Hub-backed implementation можно подключить без изменения use cases и без DB credentials в UI. Remote implementation и авторизация Hub ещё не реализованы. Plugin Manager остаётся границей Core и adapter processes.
 
 Geely Research Mode использует специальный Core use case с фиксированным `adapter-geely-research` ID и дополнительным `vehicle_profile` SDK request. Профиль и результаты не сохраняются как отдельные записи; resource file попадает в Localization Engine только по действию пользователя. Report builder выводит hash/key metadata без local path и raw resource contents. Для этого процесса не добавлялись HTTP routes или DB migrations.
+
+Deployment Engine — отдельный application service в `internal/core/application`; job и state machine — в domain; PostgreSQL хранит job snapshots и append-only progress events. Wails service запускает Core job асинхронно и отправляет typed `deployment:progress` только после persistence. UI восстанавливает job/event history через Go bindings. CARVION package загружается из Localization repository по project ID и сохранённому SHA-256; verifier проверяет ZIP structure и declared checksums. Единственный provider `synthetic-local-simulator` не имеет install method/capability. Production mode заблокирован константной Core policy, а не настройкой UI.
 
 ## Архитектурные пробелы
 
@@ -113,6 +116,7 @@ Geely Research Mode использует специальный Core use case с
 - `CatalogRepository` остаётся read-only и читает три исходные catalog tables. `LocalizationRepository` поддерживает транзакционную запись localization projects/resources/translations, append-only history, validation runs и package artifacts. Repositories/use cases для adapter definitions, versions, hardware variants, firmware builds и compatibility rules пока отсутствуют.
 - Таблицы `adapter_definitions` и связанные справочники не синхронизированы с локальной регистрацией Manager.
 - Hub-backed repository не реализован; механизм авторизации Desktop к Hub ещё требует проектирования.
+- Production Deployment заблокирован: нет подтверждённой platform, exact production compatibility, разрешённого install method, production result verification/recovery procedure или bench evidence. Synthetic provider не затрагивает оборудование; настоящий rollback отсутствует. PostgreSQL deployment integration tests требуют выделенную test database.
 - Отдельный процесс не является OS sandbox. Каталог адаптеров должен оставаться доверенным.
 - macOS package подписан ad-hoc для локального запуска; распространение требует Developer ID signing и notarization.
 - GitHub remote установлен как `https://github.com/Sneypsleep90/carvion.git`; локальная Git history начинается с публикации текущего backend.

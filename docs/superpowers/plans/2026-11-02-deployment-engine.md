@@ -151,31 +151,31 @@ type DeploymentProvider interface {
 
 **Файлы:** создать `desktop/frontend/src/features/deployment-page.tsx`; изменить `navigation.ts`, `App.tsx`, `lib/backend.ts`, `e2e-entry.tsx`, `e2e/studio.spec.ts`.
 
-- [ ] **Step 1: Добавить E2E scenarios**: Production shows blockers and persisted blocked result; valid approved project + synthetic supported profile runs simulated lifecycle; final UI explicitly says no vehicle changed; invalid package check fails without simulation; RPC/provider failure, cancel and reloaded job history states.
-- [ ] **Step 2: Запустить** `cd desktop/frontend && npm test -- --grep 'deployment'`; tests must fail because Deployment screen/methods are missing.
-- [ ] **Step 3: Реализовать typed backend** for list/start/get/cancel and `onDeploymentProgress`; Wails implementation subscribes using `@wailsio/runtime Events.On`, test backend publishes explicitly marked fixtures.
-- [ ] **Step 4: Реализовать UI**: project and embedded synthetic target selectors; separate `Test` and `Production blocked` states; cards for package integrity, compatibility, installation capability, recovery and bench evidence; live progress and persisted jobs; cancel only active test; no generic install button and no wording `installed/deployed`.
-- [ ] **Step 5: Запустить** `npm run typecheck`, all Playwright tests with `npm test`, and production frontend `npm run build`; repair failures and rerun until exit 0.
-- [ ] **Step 6: Commit** `feat: add deployment workspace`.
+- [x] **Step 1: Добавить E2E scenarios**: Production shows blockers and persisted blocked result; valid approved project + synthetic supported profile runs simulated lifecycle; final UI explicitly says no vehicle changed; invalid package check fails without simulation; RPC/provider failure, cancel and reloaded job history states.
+- [x] **Step 2: Запустить** `cd desktop/frontend && npm test -- --grep 'deployment'`; expected red confirmed before adding workspace.
+- [x] **Step 3: Реализовать typed backend** for list/start/get/cancel and `onDeploymentProgress`; Wails implementation subscribes using `@wailsio/runtime Events.On`, test backend publishes explicitly marked fixtures.
+- [x] **Step 4: Реализовать UI**: project and embedded synthetic target selectors; separate `Test` and `Production blocked` states; cards for package integrity, compatibility, installation capability, recovery and bench evidence; live progress and persisted jobs; cancel only active test; no generic install button and no wording `installed/deployed`.
+- [x] **Step 5: Запустить** `npm run typecheck`, all Playwright tests with `npm test`, and production frontend `npm run build`; all passed after aligning with regenerated Wails bindings.
+- [x] **Step 6: Commit** `feat: add deployment workspace` (`08d83bf`).
 
 ## Task 8: Deployment docs and project records
 
 **Файлы:** создать `docs/deployment/ARCHITECTURE.md`, `PREFLIGHT.md`, `SAFETY.md`, `RECOVERY.md`, `TESTING.md`; обновить docs indexes and state.
 
-- [ ] **Step 1: Документировать** audit findings, mode-specific gates, provider capability contract, full state machine, package integrity vs authenticity, append-only local audit limits and current absence of any hardware/bench validation.
-- [ ] **Step 2: Обновить** `docs/README.md`, `PROJECT.md`, `architecture.md`, `ROADMAP.md`, `PROGRESS.md`, `CHANGELOG.md`, `DECISIONS.md`, `TESTING.md`, `KNOWN_ISSUES.md`, `NEXT_STEPS.md`, `DESKTOP.md`, `TECH_STACK.md` and adapter/localization notes only where their existing descriptions change.
-- [ ] **Step 3: Проверить** each statement against manifest/capabilities, Core production policy, migration, package verifier and current E2E results. Mark hardware operation as not tested; mark only synthetic provider as implemented/verified.
-- [ ] **Step 4: Запустить** `git diff --check` and resolve every reported whitespace error.
-- [ ] **Step 5: Commit** `docs: document deployment engine readiness and safety`.
+- [x] **Step 1: Документировать** audit findings, mode-specific gates, provider capability contract, full state machine, package integrity vs authenticity, append-only local audit limits and current absence of any hardware/bench validation.
+- [x] **Step 2: Обновить** `docs/README.md`, `PROJECT.md`, `architecture.md`, `ROADMAP.md`, `PROGRESS.md`, `CHANGELOG.md`, `DECISIONS.md`, `TESTING.md`, `KNOWN_ISSUES.md`, `NEXT_STEPS.md`, `DESKTOP.md`, `TECH_STACK.md` and adapter/localization notes only where their existing descriptions change.
+- [x] **Step 3: Проверить** each statement against manifest/capabilities, Core production policy, migration, package verifier and current E2E results. Mark hardware operation as not tested; mark only synthetic provider as implemented/verified.
+- [x] **Step 4: Запустить** `git diff --check` and resolve every reported whitespace error.
+- [x] **Step 5: Commit** `docs: document deployment engine readiness and safety`.
 
 ## Task 9: Full verification and completion record
 
-- [ ] **Step 1:** Run `make desktop-test` (root/Desktop Go, TypeScript, Playwright, Vite).
-- [ ] **Step 2:** Run `make lint` and `make build` (API and both adapters).
-- [ ] **Step 3:** Run `make desktop-build`; verify arm64 Mach-O and `codesign --verify --deep --strict desktop/bin/carvionstudio.app`.
-- [ ] **Step 4:** Run `go test -tags=integration ./internal/core/infrastructure/postgres -run '^$' -count=1`; if a dedicated test DB is configured, apply Goose migrations 00001–00004 and run deployment persistence tests against it. Never point integration tests at the developer database.
-- [ ] **Step 5:** Verify full suite output, `git diff --check`, clean worktree and accurate `docs/PROGRESS.md`/`docs/TESTING.md` results. Explicitly report that no physical hardware test was run and Production Mode remains blocked.
-- [ ] **Step 6: Commit** final docs/test result reconciliation only if it changes files; otherwise report the final verification results.
+- [x] **Step 1:** Run `make desktop-test` (root/Desktop Go, TypeScript, Playwright, Vite): passed; 18 Playwright scenarios.
+- [x] **Step 2:** Run `make lint` and `make build` (API and both adapters): passed.
+- [x] **Step 3:** Run `make desktop-build`; verify arm64 Mach-O and `codesign --verify --deep --strict desktop/bin/carvionstudio.app`: passed.
+- [x] **Step 4:** Applied Goose migrations 00001–00004 to a dedicated temporary PostgreSQL 18 container and ran `CARVION_TEST_DATABASE_URL=… go test -tags=integration ./... -count=1`: passed. The container was removed; the developer database was not used.
+- [x] **Step 5:** Verified `git diff --check`, formatted changed Go test, reconciled `docs/PROGRESS.md` and `docs/TESTING.md`, and verified the worktree after commits. No physical hardware test was run; Production Mode remains blocked.
+- [x] **Step 6:** Committed final docs and verification reconciliation with `docs: document deployment engine readiness and safety`.
 
 ## Self-review: design coverage
 

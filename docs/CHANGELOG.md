@@ -2,6 +2,14 @@
 
 Здесь фиксируются фактические технические изменения; будущие планы приведены в [ROADMAP.md](ROADMAP.md).
 
+## 2026-11-02 — Step 7: Deployment Engine
+
+- Добавлены domain job/state machine, ограниченный verifier CARVION ZIP и отдельный simulation-only provider без install method.
+- Добавлены PostgreSQL migration `00004_deployment_engine.sql` и persistent jobs/append-only events repository.
+- Core preflight сохраняет Production blockers, а константная политика запрещает Production execution.
+- Wails facade добавляет async lifecycle, cancellation и persisted-before-publish `deployment:progress`; React screen показывает preflight, историю, ошибки и только synthetic test run.
+- Созданы `docs/deployment/`; полные unit/integration/E2E/build проверки записаны в [TESTING.md](TESTING.md).
+
 ## 2026-11-01 — Geely Research Adapter
 
 - Добавлен strict `carvion.geely-research/v1` profile parser, ограниченные официальные evidence entries, пустой exact compatibility catalog, exact matcher и JSON diagnostic report. Profile schema ограничивает размеры/UTF-8/unknown fields и отклоняет VIN-подобные значения и credential assignments.

@@ -11,7 +11,7 @@
 | Step 4 | Localization Engine | Выполнено 2026-11-01; детали в `docs/localization/` |
 | Step 5 | CARVION Simulator | Выполнено 2026-11-01; детали и реальные результаты — `docs/simulator/` |
 | Step 6 | Geely Research Adapter | Исследовательский каркас реализован; точные конфигурации неизвестны, поддержка не заявлена |
-| Step 7 | Deployment Engine | Запланировано; только разрешённые и документированные операции |
+| Step 7 | Deployment Engine | Реализован Core, PostgreSQL audit, synthetic provider и Desktop workspace; Production Mode заблокирован, аппаратных тестов нет |
 | Step 8 | CARVION Hub & Commercial Platform | Запланировано |
 
 ## Цели и критерии готовности этапов
@@ -44,9 +44,9 @@ SDK API v1 сохранён; manifest schema v2 объявляет SDK SemVer, �
 
 Добавлены локальный process adapter, строгий versioned JSON profile, официальный evidence catalog с областью применимости, пустой exact compatibility catalog, XML/JSON resource analysis через существующий parser и Wails Geely Research Mode. Localization import сохраняет пользовательский файл только после сверки Core и adapter parser; диагностический отчёт не содержит resource content или filesystem path. Это не завершённое исследование аппаратуры: OS/build IDs и аппаратные ревизии Xingyue L / Monjaro 2022–2024 не установлены. В отсутствие полного проверенного правила статус `unknown`, поддержка Geely не заявлена. PostgreSQL schema/migration и HTTP routes для Desktop не добавлялись. См. [docs/research/geely/OVERVIEW.md](research/geely/OVERVIEW.md).
 
-### Step 7 — Deployment Engine
+### Step 7 — Deployment Engine — тестовый scope реализован 2026-11-02
 
-Определить разрешённый deployment scope, проверку целостности, явное подтверждение пользователя, безопасное прерывание и rollback для документированных процедур. Не реализовывать обход защиты или несанкционированную запись в автомобиль.
+Добавлены persistent Deployment Jobs/events, package integrity preflight, строгая state machine, result/recovery capability checks, Wails progress и Desktop history. Подключён только synthetic provider без возможности установки; Production Mode всегда заблокирован Core policy из-за отсутствия проверенных platform/install/compatibility/recovery/bench evidence. Автомобильные и стендовые проверки не выполнялись. См. [deployment/](deployment/ARCHITECTURE.md).
 
 ### Step 8 — CARVION Hub & Commercial Platform
 

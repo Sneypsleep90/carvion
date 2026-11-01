@@ -4,11 +4,11 @@ CARVION Studio — macOS Desktop приложение для работы с л�
 
 ## Состояние
 
-**Реализовано:** Wails 3.0.0 shell; React 18 + TypeScript; Tailwind CSS 4 и локальные shadcn/ui-style components; Lucide icons; typed Go service facade; embedded production assets; локальный runtime через `composition.NewLocal`; навигация по восьми разделам.
+**Реализовано:** Wails 3.0.0 shell; React 18 + TypeScript; Tailwind CSS 4 и локальные shadcn/ui-style components; Lucide icons; typed Go service facade; embedded production assets; локальный runtime через `composition.NewLocal`; навигация по разделам Studio.
 
-**Рабочие workflows:** состояние Core/PostgreSQL/адаптеров, синтетический adapter registry, каталог из PostgreSQL, synthetic compatibility checks, Localization Engine для локальных файлов Android XML/JSON и Simulator для локальных synthetic профилей.
+**Рабочие workflows:** состояние Core/PostgreSQL/адаптеров, синтетический adapter registry, каталог из PostgreSQL, synthetic compatibility checks, Localization Engine для локальных файлов Android XML/JSON, Simulator и Deployment workspace для synthetic profiles. Deployment history и events сохраняются в PostgreSQL; Production Mode всегда блокируется Go Core.
 
-**Placeholder / запланировано:** отдельные Language Packages и Operation History screens и часть Settings показывают будущие состояния. Нет deployment, реального подключения к автомобилю, Hub client или Hub authentication.
+**Placeholder / запланировано:** отдельные Language Packages и Operation History screens и часть Settings показывают будущие состояния. Production installation, реальное подключение к автомобилю, Hub client и Hub authentication отсутствуют.
 
 ## Архитектура
 
@@ -23,6 +23,7 @@ internal/composition.NewLocal
         ├── application.Service (catalog + localization use cases)
         ├── local PostgreSQL catalog/localization repositories
         ├── internal/localization (XML/JSON/CSV, validation, exports, ZIP)
+        ├── DeploymentService (preflight, persistent jobs/events, synthetic-only simulation)
         └── Plugin Manager → local JSON-RPC adapter process
 ```
 
@@ -44,6 +45,7 @@ Generated bindings находятся в `desktop/frontend/bindings/github.com/S
 | Localization | Импорт Android XML/JSON, проекты и русские переводы, поиск, edit/approve, reimport source, validation, CSV/resource export и ZIP package download. Прямой Wails-to-Core вызов |
 | Исследование Geely | Загрузка versioned JSON profile и отдельного XML/JSON resource, file provenance, evidence со scope, строгий `unknown` без exact record, XML/JSON analysis, explicit import в Localization и приватный diagnostic report. Не подключается к автомобилю и не заявляет Geely support |
 | Simulator | Выбор synthetic профиля, запуск Core workflow через JSON-RPC demo process, event log, отмена, compatibility/package verification и загрузка тестового ZIP. Не подключается к автомобилю |
+| Deployment | Проверка сохранённого CARVION package, synthetic test run, Production readiness blockers, typed progress и PostgreSQL job history. В Core нет install provider/method; Production Mode всегда заблокирован |
 | Language Packages | Placeholder отдельного экрана; сборка и скачивание доступны на экране Localization |
 | Adapters | Адаптеры из доверенного локального каталога и доступность Core |
 | Operation History | Placeholder; операции пока не сохраняются в журнал |
@@ -85,9 +87,10 @@ make build
 ## Ограничения хранения и доверия
 
 - В текущем dev режиме требуется локальная PostgreSQL и `DATABASE_URL`.
-- Примените миграцию `00003_localization_engine.sql` через `make migrate-up` перед использованием Localization Engine.
+- `make migrate-up` применяет все доступные миграции, включая `00004_deployment_engine.sql`, перед запуском Deployment workspace.
 - Android XML inline markup/CDATA внутри переводимых элементов пока отклоняется. JSON ограничен schema `carvion.localization/v1`.
 - Языковой ZIP — CARVION localization artifact с `oem_firmware=false`; он не является OEM firmware и не устанавливается на автомобиль.
+- SHA-256 в Deployment preflight проверяет целостность байтов, но не доказывает подпись, происхождение или OEM authenticity. Synthetic result/recovery checks не являются испытаниями на автомобиле/стенде.
 - Desktop UI не получает database connection или credentials напрямую; Go composition владеет pool.
 - Hub-backed repository, remote mode, пользовательская Hub авторизация и offline policy не реализованы.
 - Adapter Manager запускает только доверенные локальные процессы из `ADAPTERS_DIR`; отдельный процесс сам по себе не является OS sandbox.

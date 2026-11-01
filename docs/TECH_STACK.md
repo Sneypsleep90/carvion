@@ -16,6 +16,7 @@
 | PostgreSQL repository | Чтение manufacturers, vehicle models и infotainment platforms через pgx | Local development implementation; Hub-backed repository ещё нет |
 | Localization Engine | Go parsers/validator/exporter/package builder; pgx stores project, translation, history and package data | Доступен через Core и Wails; HTTP routes нет |
 | CARVION Simulator | Shared synthetic profile catalog, Core orchestration, JSON-RPC demo process, Localization Engine package verification | Только встроенные test fixtures; без vehicle connection, firmware, сети или установки |
+| Deployment Engine | Go Core state machine, strict ZIP/SHA-256 verification, PostgreSQL job/event repository и Wails progress binding | Только synthetic provider; Production Mode блокируется в Core; digest не подтверждает издателя или OEM authenticity |
 | Wails v3.0.0 | Desktop shell, embedded frontend assets и service bindings в отдельном `desktop` Go module | Зафиксирована версия framework и runtime; текущая сборка проверена на darwin/arm64 |
 | React 18 + TypeScript | CARVION Studio UI и typed binding client | Strict TypeScript; Go Core вызывается напрямую, HTTP fetch отсутствует |
 | Tailwind CSS 4 + shadcn/ui-style components | Дизайн-система и локальные Radix/CVA компоненты | Используются необходимые primitives в `desktop/frontend/src/components/ui` |

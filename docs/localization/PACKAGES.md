@@ -20,3 +20,5 @@ checksums.sha256
 Пакет сохраняется в таблицу `language_packages` вместе с ZIP bytes, размером, SHA-256 и ссылкой на validation run. UI получает artifact через Wails binding и сохраняет его как `.carvion.zip`.
 
 Пакет предназначен для обмена/проверки локализации. Он не является OEM firmware, не прошивается и не устанавливается на автомобиль.
+
+Deployment Engine проверяет ограниченный набор ZIP entries, schema, validation report, entry checksums и SHA-256 artifact. Это проверяет целостность относительно переданного digest, но не издателя/подпись; при несоответствии provider не запускается.
