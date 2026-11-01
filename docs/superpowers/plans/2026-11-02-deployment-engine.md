@@ -98,8 +98,8 @@ type DeploymentRepository interface {
 
 **Файлы:** создать `internal/core/application/deployment_provider.go`, `internal/deployment/simulated_provider.go`, соответствующие unit tests.
 
-- [ ] **Step 1: Написать tests** на provider `mode=simulation`, `CanInstall=false`, capability раздельно сообщает result verification/recovery check; исполнение simulation не меняет оборудование и заканчивается только `simulated`.
-- [ ] **Step 2: Реализовать контракт**:
+- [x] **Step 1: Написать tests** на provider `mode=simulation`, `CanInstall=false`, capability раздельно сообщает result verification/recovery check; исполнение simulation не меняет оборудование и заканчивается только `simulated`.
+- [x] **Step 2: Реализовать контракт**:
 
 ```go
 type DeploymentProviderCapabilities struct {
@@ -119,9 +119,9 @@ type DeploymentProvider interface {
 }
 ```
 
-- [ ] **Step 3: Добавить synthetic implementation** только для embedded simulator profiles с `synthetic=true`; она испускает ограниченный упорядоченный event sequence, верифицирует test package hash/result, умеет сообщить только `simulated recovery available`, не имеет OS/device/DB/file/network API и не определяет `Install` method.
-- [ ] **Step 4: Запустить** `go test ./internal/deployment ./internal/core/application -run 'DeploymentProvider|Simulat' -count=1`; ожидать прохода unit/provider tests.
-- [ ] **Step 5: Commit** `feat: add synthetic deployment provider`.
+- [x] **Step 3: Добавить synthetic implementation** только для embedded simulator profiles с `synthetic=true`; она испускает ограниченный упорядоченный event sequence, верифицирует test package hash/result, умеет сообщить только `simulated recovery available`, не имеет OS/device/DB/file/network API и не определяет `Install` method.
+- [x] **Step 4: Запустить** `go test ./internal/deployment ./internal/core/application -run 'DeploymentProvider|Simulat' -count=1` и полный `go test ./internal/deployment -count=1`; оба прошли.
+- [x] **Step 5: Commit** `feat: add synthetic deployment provider`.
 
 ## Task 5: Core preflight и job orchestration
 

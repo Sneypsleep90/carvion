@@ -12,6 +12,13 @@ const (
 	DeploymentModeProduction DeploymentMode = "production"
 )
 
+type DeploymentProviderMode string
+
+const (
+	DeploymentProviderModeSimulation DeploymentProviderMode = "simulation"
+	DeploymentProviderModeProduction DeploymentProviderMode = "production"
+)
+
 type DeploymentState string
 
 const (
