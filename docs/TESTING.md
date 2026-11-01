@@ -8,10 +8,16 @@
 - **Demo adapter:** synthetic JSON, точное совпадение build+hardware, unknown vehicle/build и `strings.xml` parsing.
 - **HTTP:** `httptest` для health/readiness, adapters list, request validation, structured errors и manager error mapping.
 - **Core application:** fake adapter gateway/repository tests проверяют use case delegation, input validation, propagation/cancellation контекста и прямые service operations без HTTP.
+- **Localization Engine:** unit tests проверяют XML/JSON/CSV parsing/export, metadata, duplicate keys, malformed XML/UTF-8, missing/blank translations, format placeholders, plural categories, source reimport review и воспроизводимый ZIP package.
+- **Localization application:** fake repository tests проверяют import, translation status lifecycle, CSV stale-source rejection, validation persistence и package approval gate.
+- **Simulator:** unit/service tests проверяют единый synthetic catalog, capability-based adapter selection, точную identity/hardware/firmware, `supported` / `unsupported` / `unknown`, early exits, RPC errors, context cancellation и package integrity. Общий двухминутный run deadline реализован, но отдельный тест его истечения не запускался; Plugin Manager RPC timeout проверяется отдельно.
+- **Simulator process/DB:** integration-tagged tests компилируют настоящий demo executable, вызывают его через Plugin Manager/JSON-RPC, а отдельный сценарий проверяет сохранение Localization project/translations/package в выделенной PostgreSQL базе.
+- **Localization PostgreSQL:** integration test проверяет project/resource round-trip, draft/approval history, reimport source change, validation-run persistence и package artifact storage на выделенной базе.
 - **Desktop service:** Wails lifecycle tests проверяют degraded startup, direct Core delegation, readiness state, shutdown и cancelled context.
-- **UI:** Playwright E2E использует отдельный synthetic test backend; production bundle импортирует generated Wails bindings. Проверяются навигация, версии/capabilities/status адаптера, фильтр по capability/формату, выбор adapter ID, `unknown` compatibility и Android XML inspection.
+- **UI:** Playwright E2E использует отдельный synthetic test backend; production bundle импортирует generated Wails bindings. Проверяются навигация, версии/capabilities/status адаптера, `unknown` compatibility, localization import/edit/approve/validate и повторная проверка при изменении source.
+- **Simulator UI:** E2E покрывает полный synthetic localization/package flow и download, unknown firmware, incompatible hardware, контролируемую RPC ошибку и user cancellation. Native Wails window automation не входит в Playwright suite.
 - **Native Desktop:** `wails3 package` создаёт и подписывает ad-hoc `.app`; ручной smoke открывает приложение, читает runtime state, вызывает compatibility и `InspectResources` через настоящие Wails bindings.
-- **PostgreSQL repository:** integration-tagged test проверяет реальные SELECT к `manufacturers`, `vehicle_models`, `infotainment_platforms` на применённой схеме.
+- **PostgreSQL repositories:** integration-tagged tests проверяют catalog SELECT и lifecycle localization project/translation/history/validation/package на применённых migrations; localization tests также проверяют transaction rollback и запрет изменения history.
 - **DB connection:** существующий отдельный тест с tag `integration` проверяет connect/ping; нужен `CARVION_TEST_DATABASE_URL`, migrations он не выполняет.
 - **Migrations/API smoke:** проверялись отдельно на локальной PostgreSQL при реализации Adapter SDK (исходный Step 2).
 
@@ -39,6 +45,20 @@
 | 2026-11-01, Step 3 | `make desktop-build` | Пройдено: Wails CLI v3.0.0 пересоздал bindings, собрал arm64 macOS `.app` и проверил ad-hoc codesign. npm audit — 0 vulnerabilities; выдано предупреждение `allow-scripts` для `fsevents`. |
 | 2026-11-01, Step 3 | Native app smoke | Упакованный CARVION Studio открылся с Core ready, PostgreSQL connected и зарегистрированным `adapter-android-demo`; Adapters screen показал manifest metadata/status. Через UI и реальные Wails bindings compatibility вернула `supported` для точного synthetic profile; XML inspection вернула две переводимые строки и пропустила `translatable="false"`. Smoke выполнялся вручную, не в CI; автомобиль не подключался. |
 | 2026-11-01, Step 0 | Integration-tagged `TestConnect` | Не запускался в аудите: `CARVION_TEST_DATABASE_URL` тогда не был задан; позже при Step 1 integration suite прошёл на локальной PostgreSQL |
+| 2026-11-01, Step 4 | `go test ./internal/localization ./internal/core/... ./internal/composition` | Пройдено: parser, validator, deterministic package builder, application use cases, Core и composition tests |
+| 2026-11-01, Step 4 | Migration `00003_localization_engine.sql` | Goose успешно применил миграции до schema version 3 на отдельной тестовой PostgreSQL базе |
+| 2026-11-01, Step 4 | `go test -tags=integration -count=1 ./internal/core/infrastructure/postgres` | Пройдено на выделенной базе после миграций: localization persistence, rollback при duplicate resource, immutable history, source-change review и package artifact storage |
+| 2026-11-01, Step 4 | `make test-integration` | Пройден полный integration-tagged Go suite с `CARVION_TEST_DATABASE_URL`, включая PostgreSQL repository tests |
+| 2026-11-01, Step 4 | `go test -tags=integration -count=1 ./...` | После review fix повторно пройден полный integration suite на мигрированной выделенной базе без test cache |
+| 2026-11-01, Step 4 | `make desktop-test` | Пройдено: root и Desktop Go tests, TypeScript typecheck, 5 Playwright E2E tests и Vite production build |
+| 2026-11-01, Step 4 | `go test -race ./internal/localization ./internal/core/application` | Пройдено без race reports |
+| 2026-11-01, Step 4 | `make lint` и `make build` | Пройдено: gofmt/vet, API и `adapter-android-demo` binaries собраны |
+| 2026-11-01, Step 4 | `make desktop-build` | Пройдено: Wails v3 собрал production frontend и macOS `.app`, ad-hoc codesign verification прошёл. Native UI smoke для этого этапа отдельно не запускался. npm сообщил allow-scripts warning для `fsevents`; сборка успешна. |
+| 2026-11-01, Step 5 | `make desktop-test` | Пройдено после финальной cancellation event правки: root/Desktop Go suite, TypeScript, 10 Playwright E2E tests и production Vite build. UI E2E использует synthetic backend, Wails browser-preview warning ожидаем. |
+| 2026-11-01, Step 5 | `go test -tags=integration -count=1 ./...` | Пройдено после Goose migrations 1–3 на изолированной временной PostgreSQL базе. Включены JSON-RPC subprocess full flow и Localization persistence; база удалена после теста. |
+| 2026-11-01, Step 5 | `go test -race -count=1 ./internal/simulator ./internal/adapters/androiddemo ./internal/core/application` и Desktop `go test -race -count=1 ./...` | Пройдено без race reports. Для Desktop native build задан minimum macOS 13.0 через CGO/macOS environment flags. |
+| 2026-11-01, Step 5 | `make lint`, `make build`, `make desktop-build` | Пройдены: gofmt/vet, API/demo executables, Wails frontend и macOS app package с успешной ad-hoc codesign verification. npm сообщил `allow-scripts` warning для `fsevents`, build успешен. |
+| 2026-11-01, Step 5 | `git diff --check` | Пройдено после удаления одной лишней пустой строки в конце изменённого Localization frontend file. |
 
 ## Команды разработчика
 
@@ -54,4 +74,4 @@ make build
 CARVION_TEST_DATABASE_URL='postgres://user:password@localhost:5432/carvion_test?sslmode=disable' go test -tags=integration ./...
 ```
 
-Wails UI E2E использует synthetic backend и не заменяет native manual smoke. Полноценной автоматизации управления Wails native window в CI пока нет. Migration constraint tests и automated PostgreSQL schema tests отсутствуют; repository integration покрывает только исходные catalog tables.
+Wails UI E2E использует synthetic backend и не заменяет native manual smoke. Полноценной автоматизации управления Wails native window в CI пока нет. PostgreSQL integration tests требуют отдельную заранее созданную и мигрированную test database; migrations запускаются отдельно от Go test suite.

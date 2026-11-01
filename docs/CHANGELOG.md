@@ -2,6 +2,26 @@
 
 Здесь фиксируются фактические технические изменения; будущие планы приведены в [ROADMAP.md](ROADMAP.md).
 
+## 2026-11-01 — CARVION Simulator
+
+- Добавлен `internal/simulator` как единственный каталог явно демонстрационных profiles и Android XML fixtures; фикстуры не содержат реальных vehicle/firmware данных и не заявляют Geely support.
+- `adapter-android-demo` определяет оба supported synthetic profiles, проверяет exact firmware/hardware, отказывает для unknown identity/build и возвращает контролируемую RPC ошибку в отдельном процессе.
+- Core Simulator use case выбирает adapter по capabilities, перепроверяет результат detection против ожидаемой profile identity и запускает localization/package workflow только для `supported`; unknown/unsupported прекращают workflow до resource import.
+- Добавлены end-to-end result events, run deadline, отмена Wails-запуска, resource equality check, validation и проверка CARVION ZIP/SHA-256/checksums/non-OEM manifest. Отдельной persistent таблицы прогонов и HTTP endpoint нет.
+- Добавлен Desktop Simulator screen с маркировкой `SIMULATION`, профилями, event log, отменой и package download. Playwright tests используют только тестовый backend; реальные JSON-RPC и PostgreSQL boundaries проверяются integration tests.
+- Созданы `docs/simulator/OVERVIEW.md`, `SCENARIOS.md`, `TEST_RESULTS.md`; обновлены roadmap, architecture, project, desktop, testing, decisions, issues и next steps.
+
+## 2026-11-01 — Localization Engine
+
+- Добавлены `internal/localization` parsers/exporters для Android XML (`string`, arrays, plurals), versioned JSON schema `carvion.localization/v1` и RFC 4180 translation CSV; исходная структура и metadata сохраняются.
+- Добавлены Core use cases для проектов локализации, edit/approve/review переводов, reimport исходника, validation, resource/CSV export и package build. Изменение source invalidates approvals и добавляет history.
+- Добавлена Goose migration `00003_localization_engine.sql` с project/resource/translation/history/validation/package таблицами, constraints, индексы и immutable translation-history trigger.
+- Package Builder выдаёт воспроизводимый CARVION ZIP с manifest, validation report, ресурсами и SHA-256; `oem_firmware` фиксирован в `false`.
+- Wails Localization screen заменил read-only XML inspection workflow: project import, search, Russian translation edit, approve, validate, CSV import/export, resource export и package download. Core вызывается напрямую; HTTP endpoints не добавлялись.
+- Добавлены localization unit/application/UI/PostgreSQL integration tests и документы `docs/localization/`; реальные автомобильные ресурсы не добавлялись.
+- Экспорт переводимых self-closing XML элементов разворачивает их в валидные парные теги; namespaced tags, inline comments и processing instructions внутри переводимого текста отклоняются. History при снятии approval сохраняет hash ранее утверждённого source.
+- Проверки Step 4: `make desktop-test`, `make lint`, `make build`, `make desktop-build`, `make test-integration` и uncached PostgreSQL integration package test прошли; детали — в [TESTING.md](TESTING.md). Native UI smoke этого этапа отдельно не выполнялся.
+
 ## 2026-11-01 — Step 3: Adapter SDK & Plugin Manager
 
 - Сохранён SDK API `v1`; manifest обновлён до schema v2 с `sdk_version`, `input_types` и `resource_formats`, включая строгую проверку SemVer и capability declarations.

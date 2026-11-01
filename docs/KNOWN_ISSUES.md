@@ -4,12 +4,14 @@
 
 ## Архитектура и продукт
 
-- **Desktop покрывает начальный read-only scope:** основные dashboard/catalog/diagnostics/XML inspection flows реализованы; Language Packages и Operation History — placeholders, а Settings ограничены runtime details.
+- **Отдельные экраны пока не готовы:** Language Packages и Operation History — placeholders, а Settings ограничены runtime details. Package build доступен из Localization.
 - **API покрывает не все SDK operations:** HTTP предоставляет список и compatibility check; `Detect` и `InspectResources` доступны через Core/Manager, но routes отсутствуют.
-- **Repository пока read-only и неполный:** `CatalogRepository` читает только `manufacturers`, `vehicle_models`, `infotainment_platforms`. Нет repositories/use cases для adapter definitions, versions, hardware variants, firmware builds и compatibility rules.
+- **Repository coverage частичная:** `CatalogRepository` читает только `manufacturers`, `vehicle_models`, `infotainment_platforms`; `LocalizationRepository` поддерживает localization data. Нет repositories/use cases для adapter definitions, versions, hardware variants, firmware builds и compatibility rules.
 - **Нет связи DB catalog и manifest discovery:** Manager регистрирует адаптеры в памяти; PostgreSQL adapter tables не синхронизируются с локальными manifests.
 - **Hub-backed storage отсутствует:** application repository port позволяет подключить remote implementation, но клиент Hub, API endpoints для каталога и auth ещё не реализованы.
 - **Desktop PostgreSQL deployment не решён:** локальная БД используется при разработке; production клиентская схема (Hub, offline policy, migrations) и auth требуют решения. Desktop facade не отдаёт DB credentials frontend.
+- **Android XML parsing boundary:** nested inline markup, CDATA, comments, processing instructions и namespaced roots/`string`/`item` resources отклоняются; требуется format-preserving strategy до их поддержки.
+- **Locale validation:** проверяется непустое значение, но синтаксис BCP 47 не валидируется.
 - **macOS distribution не готов:** локальная `.app` собирается для arm64 и проходит ad-hoc signature check; Developer ID signing, notarization и обновление приложения не настроены.
 
 ## Config, dependencies, operations
@@ -28,10 +30,13 @@
 
 - **Реальных автомобильных данных нет:** demo profiles synthetic; Geely или другой производитель не поддерживается.
 - **Нет firmware deployment:** установка, изменение и запись firmware отсутствуют.
+- **Simulator ограничен тестовыми fixtures:** profiles, строки и переводы демонстрационные; event log хранится только в текущем результате, а настоящий Wails native UI не имеет автоматизированного UI-теста.
+- **Simulator workflow создаёт localization data:** локальные тестовые project/package записи сохраняются в существующих localization tables; отдельной истории прогонов нет.
+- **Simulator run deadline не имеет отдельного expiry test:** общий двухминутный предел задан в Core; протестированы cancellation и Plugin Manager RPC timeout, но не ожидание истечения полного run deadline.
 - **Нет network plugin source:** будущая доставка из Hub требует отдельной модели доверия.
 
 ## Тестовое покрытие
 
-- Go unit/service tests, `make lint`, `make build`, Desktop TypeScript/E2E/build и native macOS smoke прошли 2026-11-01; фактические команды записаны в [TESTING.md](TESTING.md).
-- PostgreSQL integration test проверяет чтение Foundation tables, но SQL schema constraints не покрыты отдельными automated tests.
-- Wails lifecycle имеет unit tests, UI имеет Playwright E2E с fake backend; полноценного native-window automation в CI нет.
+- Go unit/service tests, `make lint`, `make build`, Desktop TypeScript/E2E/build и native macOS smoke прошли 2026-11-01; фактические команды записаны в [TESTING.md](TESTING.md) и [simulator/TEST_RESULTS.md](simulator/TEST_RESULTS.md).
+- PostgreSQL integration test проверяет чтение Foundation tables, rollback импортной транзакции и immutable translation history; все schema constraints ещё не покрыты отдельными automated tests.
+- Wails lifecycle имеет unit tests, UI имеет Playwright E2E с fake backend; полноценного native-window automation в CI нет. JSON-RPC process boundary и PostgreSQL persistence Simulator покрыты отдельными integration tests.

@@ -2,8 +2,44 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./src/App";
 import type { DesktopBackend } from "./src/lib/backend";
-import { AdapterStatus, CompatibilityStatus } from "./bindings/github.com/Sneypsleep90/carvion/internal/core/domain/models";
+import { AdapterStatus, CompatibilityStatus, LocalizationResourceKind, SimulatorRunStatus, TranslationStatus, type LocalizationProject, type SimulatorProfile, type SimulatorRunResult } from "./bindings/github.com/Sneypsleep90/carvion/internal/core/domain/models";
 import "./src/index.css";
+
+let localizationProject: LocalizationProject | null = null;
+const cancelledSimulatorRequests = new Set<string>();
+
+const simulatorProfiles: ReadonlyArray<SimulatorProfile> = [
+  {
+    id: "demo-android-platform-a", name: "Demo Android Platform A", description: "Synthetic Android test device, profile A.", synthetic: true,
+    identity: { Manufacturer: "CARVION TEST LAB", Model: "Android Demo Unit", PlatformID: "android-demo-platform" },
+    hardware: { PlatformID: "android-demo-platform", Revision: "rev-a" },
+    firmware: { BuildID: "demo-build-a-001", Version: "1.0.0-demo" }, expectedCompatibility: CompatibilityStatus.StatusSupported,
+  },
+  {
+    id: "demo-android-platform-b", name: "Demo Android Platform B", description: "Synthetic Android test device, profile B.", synthetic: true,
+    identity: { Manufacturer: "CARVION TEST LAB", Model: "Android Demo Unit B", PlatformID: "android-demo-platform-b" },
+    hardware: { PlatformID: "android-demo-platform-b", Revision: "rev-b" },
+    firmware: { BuildID: "demo-build-b-001", Version: "2.0.0-demo" }, expectedCompatibility: CompatibilityStatus.StatusSupported,
+  },
+  {
+    id: "unknown-firmware", name: "Unknown Firmware", description: "Synthetic device with an unlisted firmware build.", synthetic: true,
+    identity: { Manufacturer: "CARVION TEST LAB", Model: "Android Demo Unit", PlatformID: "android-demo-platform" },
+    hardware: { PlatformID: "android-demo-platform", Revision: "rev-a" },
+    firmware: { BuildID: "synthetic-unlisted-build", Version: "9.9.9-demo" }, expectedCompatibility: CompatibilityStatus.StatusUnknown,
+  },
+  {
+    id: "incompatible-hardware", name: "Incompatible Hardware", description: "Synthetic device with an unsupported hardware revision.", synthetic: true,
+    identity: { Manufacturer: "CARVION TEST LAB", Model: "Android Demo Unit", PlatformID: "android-demo-platform" },
+    hardware: { PlatformID: "android-demo-platform", Revision: "rev-incompatible" },
+    firmware: { BuildID: "demo-build-a-001", Version: "1.0.0-demo" }, expectedCompatibility: CompatibilityStatus.StatusUnsupported,
+  },
+  {
+    id: "simulated-communication-failure", name: "Simulated Communication Failure", description: "Synthetic scenario that returns a controlled RPC error.", synthetic: true,
+    identity: { Manufacturer: "CARVION TEST LAB", Model: "Android Demo Unit", PlatformID: "android-demo-platform" },
+    hardware: { PlatformID: "android-demo-platform", Revision: "rev-a" },
+    firmware: { BuildID: "synthetic-rpc-error", Version: "1.0.0-demo-error" }, expectedCompatibility: CompatibilityStatus.StatusUnknown,
+  },
+];
 
 const backend: DesktopBackend = {
   getApplicationState: async () => ({
@@ -59,7 +95,208 @@ const backend: DesktopBackend = {
       .map((match) => ({ ID: match[1] ?? "", Text: match[2]?.trim() ?? "" }));
     return { Resources: resources };
   },
+  listLocalizationProjects: async () => localizationProject ? [{
+    id: localizationProject.id,
+    name: localizationProject.name,
+    locale: localizationProject.locale,
+    format: localizationProject.format,
+    filename: localizationProject.filename,
+    sourceSha256: localizationProject.sourceSha256,
+  }] : [],
+  getLocalizationProject: async (projectID) => {
+    if (!localizationProject || localizationProject.id !== projectID) throw new Error("localization project not found");
+    return localizationProject;
+  },
+  replaceLocalizationSource: async (projectID, filename, content) => {
+    if (!localizationProject || localizationProject.id !== projectID) throw new Error("localization project not found");
+    const resources = parseSyntheticResources(content);
+    const translations = (localizationProject.translations ?? []).map((translation) => {
+      const next = resources.find((resource) => resource.key === translation.resourceKey);
+      if (!next || next.sourceSha256 === translation.approvedSourceSha256) return translation;
+      if (translation.status !== TranslationStatus.TranslationStatusApproved) return translation;
+      const review = { ...translation, status: TranslationStatus.TranslationStatusNeedsReview };
+      delete review.approvedSourceSha256;
+      return review;
+    });
+    const updatedProject: LocalizationProject = { ...localizationProject, filename, sourceSha256: "synthetic-replacement-sha256", resources, translations };
+    localizationProject = updatedProject;
+    return updatedProject;
+  },
+  importLocalizationProject: async (name, locale, format, filename, content) => {
+    const resources = parseSyntheticResources(content);
+    localizationProject = {
+      id: "localization-demo-project",
+      name,
+      locale,
+      format,
+      filename,
+      sourceSha256: "synthetic-source-sha256",
+      resources,
+      translations: [],
+    };
+    return localizationProject;
+  },
+  updateLocalizationTranslation: async (projectID, resourceKey, targetText) => {
+    if (!localizationProject || localizationProject.id !== projectID) throw new Error("localization project not found");
+    const translation = { resourceKey, locale: localizationProject.locale, targetText, status: TranslationStatus.TranslationStatusDraft };
+    localizationProject = { ...localizationProject, translations: replaceTranslation(localizationProject.translations ?? [], translation) };
+    return translation;
+  },
+  approveLocalizationTranslation: async (projectID, resourceKey) => {
+    if (!localizationProject || localizationProject.id !== projectID) throw new Error("localization project not found");
+    const current = (localizationProject.translations ?? []).find((item) => item.resourceKey === resourceKey);
+    if (!current?.targetText.trim()) throw new Error("translation is empty");
+    const sourceHash = (localizationProject.resources ?? []).find((item) => item.key === resourceKey)?.sourceSha256;
+    if (!sourceHash) throw new Error("resource not found");
+    const translation = { ...current, status: TranslationStatus.TranslationStatusApproved, approvedSourceSha256: sourceHash };
+    localizationProject = { ...localizationProject, translations: replaceTranslation(localizationProject.translations ?? [], translation) };
+    return translation;
+  },
+  importLocalizationCSV: async (projectID, csv) => {
+    if (!localizationProject || localizationProject.id !== projectID) throw new Error("localization project not found");
+    const rows = csv.trim().split(/\r?\n/).slice(1).map((row) => row.split(","));
+    const imported = rows.filter((row) => row[0]).map(([resourceKey, , targetText]) => ({ resourceKey: resourceKey ?? "", locale: localizationProject?.locale ?? "ru-RU", targetText: targetText ?? "", status: TranslationStatus.TranslationStatusDraft }));
+    localizationProject = { ...localizationProject, translations: imported.reduce(replaceTranslation, localizationProject.translations ?? []) };
+    return localizationProject;
+  },
+  exportLocalizationCSV: async (projectID) => {
+    if (!localizationProject || localizationProject.id !== projectID) throw new Error("localization project not found");
+    const rows = ["resource_key,source_text,target_text,locale", ...(localizationProject.resources ?? []).filter((item) => item.translatable).map((resource) => {
+      const translation = (localizationProject?.translations ?? []).find((item) => item.resourceKey === resource.key);
+      return [resource.key, resource.sourceText, translation?.targetText ?? "", localizationProject?.locale ?? "ru-RU"].join(",");
+    })];
+    return { filename: `${localizationProject.filename}.translations.csv`, contentBase64: encodeBase64(rows.join("\n") + "\n") };
+  },
+  exportLocalizationResources: async (projectID) => {
+    if (!localizationProject || localizationProject.id !== projectID) throw new Error("localization project not found");
+    return { filename: localizationProject.filename, contentBase64: encodeBase64("<resources />") };
+  },
+  validateLocalizationProject: async (projectID) => {
+    if (!localizationProject || localizationProject.id !== projectID) throw new Error("localization project not found");
+    const issues = (localizationProject.resources ?? []).filter((resource) => resource.translatable && !(localizationProject?.translations ?? []).some((translation) => translation.resourceKey === resource.key && translation.targetText.trim())).map((resource) => ({ code: "missing_translation", severity: "error", resourceKey: resource.key, message: "Для ресурса отсутствует перевод." }));
+    return { valid: issues.length === 0, locale: localizationProject.locale, issues };
+  },
+  buildLocalizationPackage: async (projectID) => {
+    if (!localizationProject || localizationProject.id !== projectID) throw new Error("localization project not found");
+    const pending = (localizationProject.resources ?? []).some((resource) => resource.translatable && !(localizationProject?.translations ?? []).some((translation) => translation.resourceKey === resource.key && translation.status === TranslationStatus.TranslationStatusApproved));
+    if (pending) throw new Error("all translations must be approved");
+    return { filename: `${localizationProject.name}-${localizationProject.locale}.carvion.zip`, sha256: "synthetic-package-hash", size: 10, contentBase64: encodeBase64("demo-zip") };
+  },
+  listSimulatorProfiles: async () => simulatorProfiles,
+  runSimulatorScenario: async (profileID, requestID) => {
+    if (profileID !== "demo-android-platform-b") return createSimulatorRun(profileID);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    if (cancelledSimulatorRequests.has(requestID)) return createCancelledSimulatorRun(profileID);
+    return createSimulatorRun(profileID);
+  },
+  cancelSimulatorScenario: async (requestID) => {
+    cancelledSimulatorRequests.add(requestID);
+    return true;
+  },
 };
+
+function createSimulatorRun(profileID: string): SimulatorRunResult {
+  const profile = simulatorProfiles.find((item) => item.id === profileID);
+  if (!profile) throw new Error("unknown simulator profile");
+  const event = (step: string, status: string, message: string) => ({ at: "2026-11-01T12:00:00Z", step, status, message });
+  if (profileID === "simulated-communication-failure") {
+    return {
+      runId: "sim-run-failure", profile, adapterId: "adapter-android-demo", status: SimulatorRunStatus.SimulatorRunFailed,
+      compatibility: { Status: CompatibilityStatus.StatusUnknown, Reason: "Адаптер не ответил на тестовый запрос." },
+      package: { filename: "", sha256: "", size: 0, contentBase64: "" }, packageVerified: false, errorMessage: "simulated adapter communication failure",
+      events: [event("scenario.started", "completed", "Запущен синтетический сценарий."), event("adapter.detect", "failed", "simulated adapter communication failure")],
+    };
+  }
+
+  const compatibility = {
+    Status: profile.expectedCompatibility,
+    Reason: profile.expectedCompatibility === CompatibilityStatus.StatusSupported ? "Точное совпадение тестовой сборки и аппаратной ревизии."
+      : profile.expectedCompatibility === CompatibilityStatus.StatusUnsupported ? "Аппаратная ревизия несовместима с этой сборкой."
+        : "Сборка отсутствует в локальном тестовом каталоге.",
+  };
+  if (profile.expectedCompatibility !== CompatibilityStatus.StatusSupported) {
+    const status = profile.expectedCompatibility === CompatibilityStatus.StatusUnsupported ? SimulatorRunStatus.SimulatorRunUnsupported : SimulatorRunStatus.SimulatorRunUnknown;
+    const label = profile.expectedCompatibility === CompatibilityStatus.StatusUnsupported ? "unsupported" : "unknown";
+    return {
+      runId: `sim-run-${profileID}`, profile, adapterId: "adapter-android-demo", status, compatibility, packageVerified: false,
+      package: { filename: "", sha256: "", size: 0, contentBase64: "" },
+      events: [event("scenario.started", "completed", "Запущен синтетический сценарий."), event("device.detected", "completed", "Обнаружено виртуальное тестовое устройство."), event("adapter.selected", "completed", "Выбран локальный demo adapter."), event("compatibility.checked", label, compatibility.Reason), event("scenario.stopped", label, "Пакет локализации не создавался.")],
+    };
+  }
+
+  return {
+    runId: `sim-run-${profileID}`, profile, adapterId: "adapter-android-demo", status: SimulatorRunStatus.SimulatorRunCompleted,
+    compatibility, localizationProjectId: "synthetic-localization-project", packageVerified: true,
+    package: { filename: "CARVION-Simulator-ru-RU.carvion.zip", sha256: "synthetic-e2e-package-hash", size: 18, contentBase64: encodeBase64("synthetic package") },
+    events: [
+      event("scenario.started", "completed", "Запущен синтетический сценарий."),
+      event("device.detected", "completed", "Обнаружено виртуальное тестовое устройство."),
+      event("adapter.selected", "completed", "Выбран локальный demo adapter."),
+      event("compatibility.checked", "supported", compatibility.Reason),
+      event("resources.inspected", "completed", "Прочитаны тестовые строки Android XML."),
+      event("localization.imported", "completed", "Импортированы тестовые китайские строки."),
+      event("translations.prepared", "completed", "Подготовлены синтетические русские переводы."),
+      event("translations.validated", "completed", "Переводы прошли проверку."),
+      event("package.built", "completed", "Собран тестовый CARVION пакет."),
+      event("package.verified", "completed", "SHA-256 и non-OEM manifest проверены."),
+      event("scenario.completed", "completed", "Установка не выполнялась."),
+    ],
+  };
+}
+
+function createCancelledSimulatorRun(profileID: string): SimulatorRunResult {
+  const profile = simulatorProfiles.find((item) => item.id === profileID);
+  if (!profile) throw new Error("unknown simulator profile");
+  return {
+    runId: `sim-run-cancelled-${profileID}`, profile, adapterId: "adapter-android-demo", status: SimulatorRunStatus.SimulatorRunFailed,
+    compatibility: { Status: CompatibilityStatus.StatusUnknown, Reason: "Сценарий отменён пользователем." },
+    package: { filename: "", sha256: "", size: 0, contentBase64: "" }, packageVerified: false,
+    errorMessage: "context canceled",
+    events: [
+      { at: "2026-11-01T12:00:00Z", step: "scenario.started", status: "completed", message: "Запущен синтетический сценарий." },
+      { at: "2026-11-01T12:00:01Z", step: "scenario.cancelled", status: "failed", message: "context canceled" },
+    ],
+  };
+}
+
+function parseSyntheticResources(content: string): NonNullable<LocalizationProject["resources"]> {
+  const resources: NonNullable<LocalizationProject["resources"]> = [];
+  for (const match of content.matchAll(/<string\b([^>]*)>([\s\S]*?)<\/string>/g)) {
+    const attrs = match[1] ?? "";
+    const key = attrs.match(/name="([^"]+)"/)?.[1] ?? "";
+    if (!key) continue;
+    const sourceText = decodeEntities(match[2] ?? "");
+    resources.push({ key, kind: LocalizationResourceKind.ResourceKindString, sourceText, sourceSha256: `hash-${key}-${sourceText}`, order: resources.length, translatable: !/translatable="false"/.test(attrs), formatted: true, present: true });
+  }
+  for (const match of content.matchAll(/<string-array\b[^>]*name="([^"]+)"[^>]*>([\s\S]*?)<\/string-array>/g)) {
+    const group = match[1] ?? "";
+    for (const [index, item] of [...(match[2] ?? "").matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/g)].entries()) {
+      resources.push({ key: `${group}[${index}]`, groupKey: group, kind: LocalizationResourceKind.ResourceKindStringArrayItem, sourceText: decodeEntities(item[1] ?? ""), sourceSha256: `hash-${group}-${index}`, order: resources.length, itemIndex: index, translatable: true, formatted: true, present: true });
+    }
+  }
+  for (const match of content.matchAll(/<plurals\b[^>]*name="([^"]+)"[^>]*>([\s\S]*?)<\/plurals>/g)) {
+    const group = match[1] ?? "";
+    for (const item of (match[2] ?? "").matchAll(/<item\b[^>]*quantity="([^"]+)"[^>]*>([\s\S]*?)<\/item>/g)) {
+      const category = item[1] ?? "";
+      resources.push({ key: `${group}#${category}`, groupKey: group, kind: LocalizationResourceKind.ResourceKindPluralItem, sourceText: decodeEntities(item[2] ?? ""), sourceSha256: `hash-${group}-${category}`, order: resources.length, pluralCategory: category, translatable: true, formatted: true, present: true });
+    }
+  }
+  return resources;
+}
+
+function replaceTranslation(translations: NonNullable<LocalizationProject["translations"]>, next: NonNullable<LocalizationProject["translations"]>[number]) {
+  const index = translations.findIndex((item) => item.resourceKey === next.resourceKey && item.locale === next.locale);
+  if (index < 0) return [...translations, next];
+  return translations.map((item, itemIndex) => itemIndex === index ? next : item);
+}
+
+function decodeEntities(text: string) {
+  return text.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+}
+
+function encodeBase64(value: string) {
+  return btoa(String.fromCharCode(...new TextEncoder().encode(value)));
+}
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

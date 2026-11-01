@@ -51,7 +51,11 @@ func NewLocal(ctx context.Context, cfg config.Config, logger *slog.Logger) (*Run
 		return nil, fmt.Errorf("discover local adapters: %w", err)
 	}
 
-	core, err := application.NewService(adapterbridge.New(manager), postgres.NewCatalogRepository(pool))
+	core, err := application.NewServiceWithLocalization(
+		adapterbridge.New(manager),
+		postgres.NewCatalogRepository(pool),
+		postgres.NewLocalizationRepository(pool),
+	)
 	if err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("build application core: %w", err)

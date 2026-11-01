@@ -15,13 +15,20 @@
 | [DECISIONS.md](DECISIONS.md) | Архитектурные решения, причины и альтернативы |
 | [TESTING.md](TESTING.md) | Стратегия проверок и фактические результаты |
 | [KNOWN_ISSUES.md](KNOWN_ISSUES.md) | Архитектурные пробелы, ограничения и технический долг |
-| [NEXT_STEPS.md](NEXT_STEPS.md) | Ближайшие задачи Localization Engine |
+| [NEXT_STEPS.md](NEXT_STEPS.md) | Ближайшие задачи Step 6 — исследование платформы |
 | [DESKTOP.md](DESKTOP.md) | Интерфейс CARVION Studio, Wails bindings и локальные команды |
 | [adapters/README.md](adapters/README.md) | Индекс SDK и Plugin Manager |
 | [adapters/SDK.md](adapters/SDK.md) | Версии manifest и контракты SDK |
 | [adapters/PLUGIN_PROTOCOL.md](adapters/PLUGIN_PROTOCOL.md) | JSON-RPC и lifecycle process adapter |
 | [adapters/CREATING_ADAPTER.md](adapters/CREATING_ADAPTER.md) | Руководство по созданию адаптера |
 | [adapters/SECURITY.md](adapters/SECURITY.md) | Границы доверия и контроля ядра |
+| [localization/ENGINE.md](localization/ENGINE.md) | Компоненты и жизненный цикл локализации |
+| [localization/FORMATS.md](localization/FORMATS.md) | Android XML, JSON schema и CSV |
+| [localization/VALIDATION.md](localization/VALIDATION.md) | Проверки, статусы и устаревшие утверждения |
+| [localization/PACKAGES.md](localization/PACKAGES.md) | Состав, SHA-256 и provenance language packages |
+| [simulator/OVERVIEW.md](simulator/OVERVIEW.md) | Границы Simulator, Core flow, статусы и package verification |
+| [simulator/SCENARIOS.md](simulator/SCENARIOS.md) | Synthetic profiles и ожидаемые результаты сценариев |
+| [simulator/TEST_RESULTS.md](simulator/TEST_RESULTS.md) | Фактические проверки Simulator и их ограничения |
 | [research/README.md](research/README.md) | Индекс технических исследований платформ |
 
 ## Статусные обозначения
@@ -34,7 +41,7 @@
 ## Сохранённые заметки предыдущих этапов
 
 - [`adapter-sdk.md`](adapter-sdk.md) сохранён как историческая запись исходного SDK этапа; актуальный контракт и протокол описаны в `adapters/`.
-- [DESKTOP.md](DESKTOP.md) описывает реализованное Wails-приложение, его ограничения и запуск на macOS.
+- [DESKTOP.md](DESKTOP.md) описывает Wails-приложение, Localization workflow, ограничения и запуск на macOS.
 
 Исторический архитектурный снимок исходного API/SDK этапа: [`history/architecture-foundation-adapter-sdk.md`](history/architecture-foundation-adapter-sdk.md).
 

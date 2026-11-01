@@ -2,7 +2,7 @@
 
 CARVION — Desktop-first платформа для анализа и локализации программных ресурсов автомобильных мультимедийных систем через подключаемые адаптеры. CARVION Studio использует Wails 3, React и TypeScript с прямыми Go bindings к Go Core.
 
-В репозитории есть работающий Desktop foundation для macOS Apple Silicon, Go Core, HTTP API, PostgreSQL setup, Adapter SDK API v1 (manifest schema v2), локальный Plugin Manager и синтетический demo adapter. Production localization workflow и реальные адаптеры отсутствуют.
+В репозитории есть работающий Desktop foundation для macOS Apple Silicon, Go Core, HTTP API, PostgreSQL setup, Adapter SDK API v1 (manifest schema v2), локальный Plugin Manager и синтетический demo adapter. Localization Engine импортирует Android XML/JSON, хранит проекты/переводы, проверяет строки и собирает CARVION language packages. Реальные адаптеры отсутствуют.
 
 Начните с [индекса документации](docs/README.md): там есть аудит, текущая и целевая архитектуры, roadmap, решения, тестовые результаты и ближайшие задачи.
 
@@ -17,7 +17,9 @@ CARVION — Desktop-first платформа для анализа и локал
 - `adapter-android-demo` работает только с синтетическими тестовыми JSON/XML данными.
 - Wails 3 app, React/TypeScript UI и typed bindings к Go Core.
 - Desktop показывает adapter versions, capabilities, input/resource formats и последний runtime status; можно выбрать тестовый адаптер для compatibility и Android strings XML inspection.
-- Языковые пакеты, история операций, редактирование/экспорт локализации, simulator, Hub-backed repository и реальные vehicle adapters пока не реализованы.
+- Localization: редактирование/утверждение переводов, validation, CSV/resource export и ZIP language package через Wails/Core.
+- Simulator: контролируемые synthetic profiles проходят через отдельный JSON-RPC demo adapter, Core проверяет совместимость и тестовый localization package; доступно в Desktop.
+- Отдельные Language Packages и Operation History screens, Hub-backed repository и реальные vehicle adapters пока не реализованы.
 
 ## Структура
 
@@ -29,6 +31,8 @@ pkg/adaptersdk/v1/               Versioned SDK и JSON-RPC server
 internal/core/domain/            Domain models and errors
 internal/core/application/       Use cases and repository/gateway ports
 internal/core/infrastructure/    PostgreSQL and adapter implementations
+internal/localization/            XML/JSON/CSV engine, validation and package builder
+internal/simulator/              Shared synthetic profiles and resources for tests
 internal/composition/            Local runtime composition and DB lifecycle
 internal/pluginmanager/          Local manifest discovery и process lifecycle
 internal/adapters/androiddemo/   Synthetic demo implementation и fixtures
@@ -96,4 +100,4 @@ make desktop-run
 
 ## Текущий roadmap
 
-Следующий этап: **Step 4 — Localization Engine**. Desktop bindings вызывают Go `application.Service` напрямую; React не использует локальный REST API. Полный план: [ROADMAP.md](docs/ROADMAP.md), ближайшие задачи: [NEXT_STEPS.md](docs/NEXT_STEPS.md).
+Следующий этап: **Step 6 — Geely Research Adapter**; перед реализацией требуется подтвердить источники и точные технические данные, поддержка не заявлена. Desktop bindings вызывают Go `application.Service` напрямую; React не использует локальный REST API. Полный план: [ROADMAP.md](docs/ROADMAP.md), ближайшие задачи: [NEXT_STEPS.md](docs/NEXT_STEPS.md).

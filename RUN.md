@@ -17,7 +17,7 @@ make migrate-up
 make desktop-dev
 ```
 
-Запустится CARVION Studio с локальной PostgreSQL и тестовым адаптером. Desktop вызывает Go Core через Wails bindings; локальный REST API ему не нужен.
+Запустится CARVION Studio с локальной PostgreSQL и тестовым адаптером. На экране Simulator доступны только встроенные synthetic profiles; Desktop вызывает Go Core через Wails bindings и не использует локальный REST API.
 
 ## Production-сборка
 

@@ -3,7 +3,6 @@ package androiddemo
 import (
 	"bytes"
 	"context"
-	_ "embed"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -11,11 +10,9 @@ import (
 	"io"
 	"strings"
 
+	"github.com/Sneypsleep90/carvion/internal/simulator"
 	sdk "github.com/Sneypsleep90/carvion/pkg/adaptersdk/v1"
 )
-
-//go:embed testdata/profiles.json
-var profilesJSON []byte
 
 const maxResourceDocumentBytes = 1 << 20
 
@@ -24,36 +21,44 @@ type DemoAdapter struct {
 }
 
 type profile struct {
-	Identity         sdk.VehicleIdentity     `json:"identity"`
-	PlatformID       string                  `json:"platform_id"`
-	HardwareRevision string                  `json:"hardware_revision"`
-	FirmwareBuildID  string                  `json:"firmware_build_id"`
-	FirmwareVersion  string                  `json:"firmware_version"`
-	Status           sdk.CompatibilityStatus `json:"status"`
+	Identity         sdk.VehicleIdentity
+	PlatformID       string
+	HardwareRevision string
+	FirmwareBuildID  string
+	FirmwareVersion  string
+	Status           sdk.CompatibilityStatus
+	FaultMode        string
 }
 
 func New() (*DemoAdapter, error) {
-	var file struct {
-		Profiles []profile `json:"profiles"`
+	profiles, err := simulator.Profiles()
+	if err != nil {
+		return nil, fmt.Errorf("load synthetic simulator profiles: %w", err)
 	}
-	decoder := json.NewDecoder(bytes.NewReader(profilesJSON))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&file); err != nil {
-		return nil, fmt.Errorf("decode embedded demo profiles: %w", err)
+	if len(profiles) == 0 {
+		return nil, errors.New("synthetic simulator profiles are empty")
 	}
-	if len(file.Profiles) == 0 {
-		return nil, errors.New("embedded demo profiles are empty")
-	}
-	for i, item := range file.Profiles {
-		if item.Identity.Manufacturer == "" || item.Identity.Model == "" || item.PlatformID == "" ||
-			item.HardwareRevision == "" || item.FirmwareBuildID == "" || item.FirmwareVersion == "" || !validStatus(item.Status) {
-			return nil, fmt.Errorf("embedded demo profile %d is incomplete", i)
+	demoProfiles := make([]profile, 0, len(profiles))
+	for _, item := range profiles {
+		loaded, err := simulator.LoadProfile(item.ID)
+		if err != nil {
+			return nil, fmt.Errorf("load synthetic simulator profile %q: %w", item.ID, err)
 		}
-		if item.Identity.PlatformID != item.PlatformID {
-			return nil, fmt.Errorf("embedded demo profile %d has inconsistent platform IDs", i)
-		}
+		demoProfiles = append(demoProfiles, profile{
+			Identity: sdk.VehicleIdentity{
+				Manufacturer: item.Identity.Manufacturer,
+				Model:        item.Identity.Model,
+				PlatformID:   item.Identity.PlatformID,
+			},
+			PlatformID:       item.Hardware.PlatformID,
+			HardwareRevision: item.Hardware.Revision,
+			FirmwareBuildID:  item.Firmware.BuildID,
+			FirmwareVersion:  item.Firmware.Version,
+			Status:           sdk.CompatibilityStatus(item.ExpectedCompatibility),
+			FaultMode:        loaded.FaultMode,
+		})
 	}
-	return &DemoAdapter{profiles: file.Profiles}, nil
+	return &DemoAdapter{profiles: demoProfiles}, nil
 }
 
 func (a *DemoAdapter) GetInfo(ctx context.Context) (sdk.AdapterManifest, error) {
@@ -86,9 +91,27 @@ func (a *DemoAdapter) Detect(ctx context.Context, request sdk.DetectRequest) (sd
 	if err := ctx.Err(); err != nil {
 		return sdk.DetectionResult{}, err
 	}
-	var identity sdk.VehicleIdentity
-	if err := decodeStrict(request.Observation, &identity); err != nil {
+	var observation vehicleObservation
+	if err := decodeStrict(request.Observation, &observation); err != nil {
 		return sdk.DetectionResult{}, fmt.Errorf("decode vehicle observation: %w", err)
+	}
+	identity := observation.identity()
+	if observation.ProfileID != "" {
+		profile, err := simulator.LoadProfile(observation.ProfileID)
+		if err != nil {
+			return sdk.DetectionResult{Status: sdk.StatusUnknown, Reason: "profile is not in the local synthetic simulator catalog"}, nil
+		}
+		if profile.FaultMode == simulator.FaultRPCError {
+			return sdk.DetectionResult{}, errors.New("simulated adapter communication failure")
+		}
+		expectedIdentity := sdk.VehicleIdentity{
+			Manufacturer: profile.Public.Identity.Manufacturer,
+			Model:        profile.Public.Identity.Model,
+			PlatformID:   profile.Public.Identity.PlatformID,
+		}
+		if !sameIdentity(identity, expectedIdentity) {
+			return sdk.DetectionResult{Status: sdk.StatusUnknown, Reason: "observation does not match its synthetic profile"}, nil
+		}
 	}
 	for _, item := range a.profiles {
 		if sameIdentity(identity, item.Identity) {
@@ -114,6 +137,9 @@ func (a *DemoAdapter) CheckCompatibility(ctx context.Context, request sdk.Compat
 		identityKnown = true
 		if item.FirmwareBuildID != request.Firmware.BuildID {
 			continue
+		}
+		if item.FaultMode == simulator.FaultRPCError {
+			return sdk.CompatibilityResult{}, errors.New("simulated adapter communication failure")
 		}
 		if item.FirmwareVersion != request.Firmware.Version {
 			return sdk.CompatibilityResult{Status: sdk.StatusUnknown, Reason: "firmware version does not exactly match a demo profile"}, nil
@@ -196,6 +222,17 @@ func sameIdentity(a, b sdk.VehicleIdentity) bool {
 	return a.Manufacturer == b.Manufacturer && a.Model == b.Model && a.PlatformID == b.PlatformID
 }
 
-func validStatus(status sdk.CompatibilityStatus) bool {
-	return status == sdk.StatusSupported || status == sdk.StatusUnsupported || status == sdk.StatusUnknown
+type vehicleObservation struct {
+	ProfileID    string              `json:"profile_id,omitempty"`
+	Identity     sdk.VehicleIdentity `json:"identity,omitempty"`
+	Manufacturer string              `json:"manufacturer,omitempty"`
+	Model        string              `json:"model,omitempty"`
+	PlatformID   string              `json:"platform_id,omitempty"`
+}
+
+func (o vehicleObservation) identity() sdk.VehicleIdentity {
+	if o.Identity.Manufacturer != "" || o.Identity.Model != "" || o.Identity.PlatformID != "" {
+		return o.Identity
+	}
+	return sdk.VehicleIdentity{Manufacturer: o.Manufacturer, Model: o.Model, PlatformID: o.PlatformID}
 }

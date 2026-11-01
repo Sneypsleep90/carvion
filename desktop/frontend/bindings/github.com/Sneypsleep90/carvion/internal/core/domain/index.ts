@@ -3,7 +3,11 @@
 
 export {
     AdapterStatus,
-    CompatibilityStatus
+    CompatibilityStatus,
+    LocalizationFormat,
+    LocalizationResourceKind,
+    SimulatorRunStatus,
+    TranslationStatus
 } from "./models.js";
 
 export type {
@@ -16,8 +20,19 @@ export type {
     HardwareInfo,
     InfotainmentPlatform,
     InspectResourcesRequest,
+    LocalizationArtifact,
+    LocalizationPackage,
+    LocalizationProject,
+    LocalizationProjectSummary,
+    LocalizationResource,
+    LocalizationTranslation,
+    LocalizationValidationIssue,
+    LocalizationValidationReport,
     Manufacturer,
     ResourceInspection,
+    SimulatorEvent,
+    SimulatorProfile,
+    SimulatorRunResult,
     TranslatableResource,
     VehicleIdentity,
     VehicleModel

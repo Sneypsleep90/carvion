@@ -6,9 +6,9 @@ CARVION Studio — macOS Desktop приложение для работы с л�
 
 **Реализовано:** Wails 3.0.0 shell; React 18 + TypeScript; Tailwind CSS 4 и локальные shadcn/ui-style components; Lucide icons; typed Go service facade; embedded production assets; локальный runtime через `composition.NewLocal`; навигация по восьми разделам.
 
-**Рабочие read-only workflows:** состояние Core/PostgreSQL/адаптеров, синтетический adapter registry, каталог автомобилей из PostgreSQL, проверка compatibility через Demo Adapter и чтение Android `strings.xml` из локального файла/тестового примера.
+**Рабочие workflows:** состояние Core/PostgreSQL/адаптеров, синтетический adapter registry, каталог из PostgreSQL, synthetic compatibility checks, Localization Engine для локальных файлов Android XML/JSON и Simulator для локальных synthetic профилей.
 
-**Placeholder / запланировано:** Language Packages, Operation History и часть Settings показывают будущие состояния. Нет проекта локализации, редактирования переводов, экспорта, deployment, реального подключения к автомобилю, Hub client или Hub authentication.
+**Placeholder / запланировано:** отдельные Language Packages и Operation History screens и часть Settings показывают будущие состояния. Нет deployment, реального подключения к автомобилю, Hub client или Hub authentication.
 
 ## Архитектура
 
@@ -20,8 +20,9 @@ desktop.ApplicationService (Wails service + lifecycle)
         │ direct Go calls, Wails context
         ▼
 internal/composition.NewLocal
-        ├── application.Service
-        ├── local PostgreSQL catalog repository
+        ├── application.Service (catalog + localization use cases)
+        ├── local PostgreSQL catalog/localization repositories
+        ├── internal/localization (XML/JSON/CSV, validation, exports, ZIP)
         └── Plugin Manager → local JSON-RPC adapter process
 ```
 
@@ -40,8 +41,9 @@ Generated bindings находятся в `desktop/frontend/bindings/github.com/S
 | Dashboard | Live состояние Core, PostgreSQL и количество обнаруженных адаптеров; переходы к основным задачам |
 | Vehicles | Read-only manufacturer/model/platform каталог из Core/PostgreSQL |
 | Diagnostics | Ручной synthetic vehicle profile и `supported` / `unsupported` / `unknown` compatibility result |
-| Localization | Выбор локального XML или synthetic пример и чтение переводимых строк через Demo Adapter |
-| Language Packages | Информационное placeholder состояние, workflow ещё не создан |
+| Localization | Импорт Android XML/JSON, проекты и русские переводы, поиск, edit/approve, reimport source, validation, CSV/resource export и ZIP package download. Прямой Wails-to-Core вызов |
+| Simulator | Выбор synthetic профиля, запуск Core workflow через JSON-RPC demo process, event log, отмена, compatibility/package verification и загрузка тестового ZIP. Не подключается к автомобилю |
+| Language Packages | Placeholder отдельного экрана; сборка и скачивание доступны на экране Localization |
 | Adapters | Адаптеры из доверенного локального каталога и доступность Core |
 | Operation History | Placeholder; операции пока не сохраняются в журнал |
 | Settings | Текущий режим/состояние; полноценные настройки пользователя не сохраняются |
@@ -82,6 +84,9 @@ make build
 ## Ограничения хранения и доверия
 
 - В текущем dev режиме требуется локальная PostgreSQL и `DATABASE_URL`.
+- Примените миграцию `00003_localization_engine.sql` через `make migrate-up` перед использованием Localization Engine.
+- Android XML inline markup/CDATA внутри переводимых элементов пока отклоняется. JSON ограничен schema `carvion.localization/v1`.
+- Языковой ZIP — CARVION localization artifact с `oem_firmware=false`; он не является OEM firmware и не устанавливается на автомобиль.
 - Desktop UI не получает database connection или credentials напрямую; Go composition владеет pool.
 - Hub-backed repository, remote mode, пользовательская Hub авторизация и offline policy не реализованы.
 - Adapter Manager запускает только доверенные локальные процессы из `ADAPTERS_DIR`; отдельный процесс сам по себе не является OS sandbox.

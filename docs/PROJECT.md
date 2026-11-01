@@ -6,11 +6,13 @@ CARVION — **Desktop-платформа** для анализа и локали
 
 ## Текущее состояние
 
-**Реализовано и проверено:** transport-independent Go Core (`domain`, `application`, `infrastructure`), composition root и repository ports; PostgreSQL read repository; HTTP API; Adapter SDK API v1 с manifest schema v2, локальный Plugin Manager и synthetic `adapter-android-demo`; Wails 3 app с React/TypeScript UI, typed direct bindings к Go Core и lifecycle-managed локальным runtime. Desktop показывает возможности/статус адаптеров и позволяет выбрать adapter ID для synthetic calls. Актуальные test results см. в [TESTING.md](TESTING.md).
+**Реализовано и проверено:** transport-independent Go Core (`domain`, `application`, `infrastructure`), composition root и repository ports; PostgreSQL catalog/localization repositories; HTTP API; Adapter SDK API v1 с manifest schema v2, локальный Plugin Manager и synthetic `adapter-android-demo`; Wails 3 app с React/TypeScript UI, typed direct bindings к Go Core и lifecycle-managed локальным runtime. Localization Engine импортирует Android XML и `carvion.localization/v1` JSON, редактирует/утверждает переводы, валидирует их, экспортирует CSV/ресурсы и собирает CARVION ZIP package. Актуальные test results см. в [TESTING.md](TESTING.md).
 
-**Реализовано частично:** Desktop экраны каталога/диагностики и read-only XML inspection; отдельные UI разделы пока placeholders.
+Simulator также реализован и проверен: он запускает локальные synthetic profiles через `adapter-android-demo`, а Go Core выполняет compatibility и тестовый localization/package workflow. Подробности — в [обзоре и результатах](simulator/OVERVIEW.md).
 
-**Не реализовано:** Hub-backed remote repository и Hub authentication, полноценные CRUD services, localization editing/export workflow, simulator, реальные автомобильные адаптеры, deployment и коммерческий Hub.
+**Реализовано частично:** Desktop экраны каталога и диагностики; Language Packages и Operation History пока placeholders. Сборка localization package доступна на экранах Localization и Simulator.
+
+**Не реализовано:** Hub-backed remote repository и Hub authentication, реальные автомобильные адаптеры, deployment и коммерческий Hub.
 
 **Неизвестно / требует исследования:** production модель хранения/авторизации Desktop (локальная PostgreSQL либо Hub), подписание и notarization приложения, достоверность и допустимость будущих источников данных.
 
@@ -24,8 +26,8 @@ CARVION — **Desktop-платформа** для анализа и локали
 
 ## Текущая возможность демо
 
-Демо принимает синтетическое JSON-наблюдение, сравнивает тестовый профиль по платформе, аппаратной ревизии и точной сборке ПО, а также извлекает переводимые строки из переданного Android `strings.xml`. Оно не подключается к автомобилю, не использует реальные образы прошивок и не заявляет поддержку Geely или другого производителя.
+Демо принимает только профили из встроенного synthetic каталога, сравнивает их по платформе, аппаратной ревизии и точной тестовой сборке ПО, извлекает тестовые строки и может прогнать полный localization/package сценарий через Simulator. Localization Engine также принимает файлы пользователя напрямую. Проект не подключается к автомобилю, не использует реальные образы прошивок и не заявляет поддержку Geely или другого производителя.
 
 ## Core и хранилище
 
-`application.Service` вызывается из Go и не требует HTTP transport. Wails facade в `desktop/` создаёт runtime через `composition.NewLocal`, передаёт Wails lifecycle context и закрывает pool при shutdown. Repository ports позволяют добавить Hub-backed реализации; удалённая реализация и auth отсутствуют. Студия сейчас требует локально настроенный PostgreSQL `DATABASE_URL` и не подключается к автомобилю.
+`application.Service` вызывается из Go и не требует HTTP transport. Wails facade в `desktop/` создаёт runtime через `composition.NewLocal`, передаёт Wails lifecycle context и закрывает pool при shutdown. Catalog и localization repository ports позволяют добавить Hub-backed реализации; удалённая реализация и auth отсутствуют. Студия сейчас требует локально настроенный PostgreSQL `DATABASE_URL` и не подключается к автомобилю.

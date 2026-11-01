@@ -1,27 +1,27 @@
-# Ближайшие задачи: Step 4 — Localization Engine
+# Ближайшие задачи: Step 6 — Geely Research Adapter
 
-Step 3 завершён: SDK API v1 с manifest schema v2, Plugin Manager, process JSON-RPC и тестовый адаптер интегрированы с Desktop. Следующий этап — workflow локализации. Roadmap: [ROADMAP.md](ROADMAP.md).
+Step 5 CARVION Simulator завершён для локальных демонстрационных данных. Он проходит synthetic профили через JSON-RPC demo adapter, Go Core и Localization Engine; подробности и подтверждённые проверки — в [simulator/OVERVIEW.md](simulator/OVERVIEW.md) и [simulator/TEST_RESULTS.md](simulator/TEST_RESULTS.md). Полный порядок этапов — в [ROADMAP.md](ROADMAP.md).
 
-## План работ Step 4
+## Следующий этап
 
-1. **Workflow анализа.** Развить XML inspection до проекта локализации с устойчивыми resource IDs и исходным текстом.
-2. **Редактирование и review.** Определить модель переводов, статусы проверки и журнал изменений без скрытого изменения исходных файлов.
-3. **Экспорт.** Спроектировать проверяемый формат языкового пакета и валидацию до записи результата.
-4. **Хранение.** Определить локальный project store и границы будущей Hub synchronization.
-5. **Тесты.** Покрыть parsing, duplicate IDs, invalid input, escaped XML, редактирование и export round-trip.
+1. Составить исследовательский план и перечень допустимых первичных источников по выбранной платформе.
+2. Установить точные platform IDs, hardware revisions и firmware build identifiers только по подтверждённым данным.
+3. Зафиксировать provenance, ограничения лицензий/доступа и неизвестные поля в `docs/research/`.
+4. Не заявлять Geely support, пока идентификаторы и compatibility rules не подтверждены и не проверены.
+5. Реализовывать Research Adapter только после фиксации evidence и безопасной read-only границы; неизвестные случаи должны оставаться `unknown`.
 
 ## Уже доступно в Desktop
 
-- Обзор состояния Go Core, локальной PostgreSQL и обнаруженных адаптеров.
-- Список и сведения о synthetic demo adapter.
-- Read-only каталог систем из PostgreSQL.
-- Ручной compatibility check и synthetic Android `strings.xml` inspection через Go binding facade.
-- Выбор установленного адаптера по заявленной capability и формату ресурса; runtime status показывает последний вызов.
-- Восемь разделов навигации; языковые пакеты, история и часть настроек пока являются объясняющими placeholder views.
+- Состояние Go Core, локальной PostgreSQL и адаптеров; каталог и synthetic compatibility checks.
+- Экран Adapters с версиями, capabilities и статусом.
+- Localization projects: импорт Android XML/JSON, поиск и правка русских переводов, утверждение, повторный review после изменения источника, validation, CSV/resource export и package download.
+- Simulator с демонстрационными профилями, compatibility exits, JSON-RPC ошибкой, отменой и проверкой скачиваемого CARVION ZIP.
+- Desktop вызывает Go Core через Wails, не через HTTP.
 
-## Ограничения и вопросы
+## Оставшиеся продуктовые задачи
 
-- Desktop runtime сейчас требует настроенный локальный `DATABASE_URL`; Hub-backed mode и auth не реализованы.
-- Нужно решить, поставляется ли PostgreSQL локально с Desktop либо Desktop MVP работает только через Hub. Решение должно сохранять отсутствие административных DB credentials в клиенте.
-- Текущие Desktop tests проверяют Go service facade и React E2E на браузерном тестовом backend; packaged app запускается вручную для smoke проверок.
-- Localization workflow, сохранение проектов, translation editing, экспорт и operation history относятся к Step 4.
+- Desktop runtime требует локальный `DATABASE_URL`; Hub-backed mode/auth и способ поставки PostgreSQL не решены.
+- Android XML inline markup и CDATA внутри переводимой строки отклоняются; детали в [localization/FORMATS.md](localization/FORMATS.md).
+- Language Packages и Operation History как отдельные экраны остаются placeholders.
+- Simulator использует только встроенные synthetic fixtures, статические русские тестовые переводы и session-only event log; native Wails UI не покрыт автоматическим UI-тестом.
+- Adapter process не является OS sandbox; signing/notarization, remote registry и real-car workflows не реализованы.

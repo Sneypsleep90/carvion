@@ -6,6 +6,7 @@ import {
   PackageOpen,
   PlugZap,
   ScanLine,
+  Waypoints,
   Settings2,
   type LucideIcon,
 } from "lucide-react";
@@ -17,6 +18,7 @@ export type SectionId =
   | "localization"
   | "language-packages"
   | "adapters"
+  | "simulator"
   | "history"
   | "settings";
 
@@ -31,6 +33,7 @@ export const navigationGroups: ReadonlyArray<Readonly<{ label: string; items: Re
       { id: "diagnostics", label: "Диагностика", icon: ScanLine },
       { id: "localization", label: "Локализация", icon: Languages },
       { id: "language-packages", label: "Языковые пакеты", icon: PackageOpen },
+      { id: "simulator", label: "Симулятор", icon: Waypoints },
     ],
   },
   {
@@ -50,6 +53,7 @@ export const sectionTitles: Readonly<Record<SectionId, string>> = {
   localization: "Локализация",
   "language-packages": "Языковые пакеты",
   adapters: "Адаптеры",
+  simulator: "Симулятор",
   history: "История операций",
   settings: "Настройки",
 };
@@ -61,6 +65,7 @@ export const sectionDescription: Readonly<Record<SectionId, string>> = {
   localization: "Чтение переводимых строк из тестового Android XML.",
   "language-packages": "Подготовка к будущему workflow локализации.",
   adapters: "Доверенные локальные процессы, обнаруженные Go Core.",
+  simulator: "Полный тестовый цикл CARVION без подключения к автомобилю.",
   history: "Журнал операций появится вместе с workflow проекта.",
   settings: "Сведения о текущем локальном запуске.",
 };

@@ -8,6 +8,7 @@ import { AdaptersPage } from "./features/adapters-page";
 import { DashboardPage } from "./features/dashboard-page";
 import { DiagnosticsPage } from "./features/diagnostics-page";
 import { LocalizationPage } from "./features/localization-page";
+import { SimulatorPage } from "./features/simulator-page";
 import { LanguagePackagesPage, OperationHistoryPage, SettingsPage } from "./features/planned-pages";
 import { VehiclesPage } from "./features/vehicles-page";
 
@@ -86,11 +87,13 @@ export default function App({ backend }: AppProps) {
       case "diagnostics":
         return <DiagnosticsPage backend={backend} adapters={adapters ?? []} />;
       case "localization":
-        return <LocalizationPage backend={backend} adapters={adapters ?? []} />;
+        return <LocalizationPage backend={backend} />;
       case "language-packages":
         return <LanguagePackagesPage onNavigate={setSection} />;
       case "adapters":
         return <AdaptersPage adapters={adapters} loading={adaptersLoading} error={adaptersError} state={applicationState} onRefresh={() => void refreshAdapters()} />;
+      case "simulator":
+        return <SimulatorPage backend={backend} />;
       case "history":
         return <OperationHistoryPage />;
       case "settings":

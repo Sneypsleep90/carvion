@@ -11,8 +11,9 @@ import (
 const maxInputFieldBytes = 256
 
 type Service struct {
-	adapters AdapterGateway
-	catalog  CatalogRepository
+	adapters     AdapterGateway
+	catalog      CatalogRepository
+	localization *LocalizationService
 }
 
 func NewService(adapters AdapterGateway, catalog CatalogRepository) (*Service, error) {
@@ -23,6 +24,19 @@ func NewService(adapters AdapterGateway, catalog CatalogRepository) (*Service, e
 		return nil, errorsMissingDependency("catalog repository")
 	}
 	return &Service{adapters: adapters, catalog: catalog}, nil
+}
+
+func NewServiceWithLocalization(adapters AdapterGateway, catalog CatalogRepository, repository LocalizationRepository) (*Service, error) {
+	service, err := NewService(adapters, catalog)
+	if err != nil {
+		return nil, err
+	}
+	localizationService, err := NewLocalizationService(repository)
+	if err != nil {
+		return nil, err
+	}
+	service.localization = localizationService
+	return service, nil
 }
 
 func (s *Service) ListAdapters(ctx context.Context) ([]domain.AdapterInfo, error) {

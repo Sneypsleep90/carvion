@@ -2,12 +2,91 @@ package androiddemo
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/Sneypsleep90/carvion/internal/simulator"
 	sdk "github.com/Sneypsleep90/carvion/pkg/adaptersdk/v1"
 )
+
+func TestDetectRecognizesBothSyntheticSimulatorProfiles(t *testing.T) {
+	adapter, err := New()
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+
+	for _, profileID := range []string{"demo-android-platform-a", "demo-android-platform-b"} {
+		t.Run(profileID, func(t *testing.T) {
+			profile, err := simulator.LoadProfile(profileID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			observation, err := json.Marshal(struct {
+				ProfileID string              `json:"profile_id"`
+				Identity  sdk.VehicleIdentity `json:"identity"`
+			}{ProfileID: profileID, Identity: sdk.VehicleIdentity{
+				Manufacturer: profile.Public.Identity.Manufacturer,
+				Model:        profile.Public.Identity.Model,
+				PlatformID:   profile.Public.Identity.PlatformID,
+			}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := adapter.Detect(context.Background(), sdk.DetectRequest{Observation: observation})
+			if err != nil {
+				t.Fatalf("Detect() error = %v", err)
+			}
+			if got.Status != sdk.StatusSupported {
+				t.Fatalf("Detect() status = %q, want %q", got.Status, sdk.StatusSupported)
+			}
+		})
+	}
+}
+
+func TestSimulatorProfilesUseExactBuildAndControlledRPCFault(t *testing.T) {
+	adapter, err := New()
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+
+	tests := []struct {
+		name       string
+		profileID  string
+		wantStatus sdk.CompatibilityStatus
+		wantErr    bool
+	}{
+		{name: "platform B exact build", profileID: "demo-android-platform-b", wantStatus: sdk.StatusSupported},
+		{name: "unknown firmware", profileID: "unknown-firmware", wantStatus: sdk.StatusUnknown},
+		{name: "incompatible hardware", profileID: "incompatible-hardware", wantStatus: sdk.StatusUnsupported},
+		{name: "controlled RPC error", profileID: "simulated-communication-failure", wantErr: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			profile, err := simulator.LoadProfile(tt.profileID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			request := sdk.CompatibilityRequest{
+				Identity: sdk.VehicleIdentity{
+					Manufacturer: profile.Public.Identity.Manufacturer,
+					Model:        profile.Public.Identity.Model,
+					PlatformID:   profile.Public.Identity.PlatformID,
+				},
+				Hardware: sdk.HardwareInfo{PlatformID: profile.Public.Hardware.PlatformID, Revision: profile.Public.Hardware.Revision},
+				Firmware: sdk.FirmwareInfo{BuildID: profile.Public.Firmware.BuildID, Version: profile.Public.Firmware.Version},
+			}
+			got, err := adapter.CheckCompatibility(context.Background(), request)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("CheckCompatibility() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err == nil && got.Status != tt.wantStatus {
+				t.Fatalf("CheckCompatibility() status = %q, want %q", got.Status, tt.wantStatus)
+			}
+		})
+	}
+}
 
 func TestDetectRecognizesSyntheticJSONObservation(t *testing.T) {
 	adapter, err := New()

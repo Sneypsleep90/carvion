@@ -8,8 +8,9 @@
 cmd/carvion-api (API/Hub transport)
   ├── config.Load + config.LoadHTTP
   ├── composition.NewLocal
-  │     ├── application.Service
+  │     ├── application.Service (catalog + localization + simulator workflows)
   │     ├── infrastructure/postgres.CatalogRepository ─── PostgreSQL
+  │     ├── infrastructure/postgres.LocalizationRepository ─ PostgreSQL
   │     └── infrastructure/adapterbridge ── Plugin Manager
   └── internal/server (chi handlers) ── application.Service
 
@@ -24,7 +25,7 @@ desktop/main.go (Wails 3)
   └── ApplicationService bindings → application.Service directly
 ```
 
-`internal/core/domain` содержит transport-neutral типы и ошибки; `internal/core/application` содержит use cases и порты; `internal/core/infrastructure` реализует PostgreSQL catalog и переводит контракты SDK/Manager в Core domain. `internal/composition.NewLocal` создаёт pool, локальный adapter manager, infrastructure и application service и владеет закрытием PostgreSQL pool. API запускает этот Core в процессе, HTTP handlers вызывают его напрямую.
+`internal/core/domain` содержит transport-neutral типы и ошибки; `internal/core/application` содержит use cases, в том числе simulator orchestration, и порты; `internal/core/infrastructure` реализует PostgreSQL repositories и переводит контракты SDK/Manager в Core domain. Localization parsers, validator, exporters и package builder расположены в `internal/localization`; общий каталог синтетических профилей и Android XML fixture — в `internal/simulator`. Эти пакеты не зависят от HTTP, Wails или PostgreSQL. `internal/composition.NewLocal` создаёт pool, repositories, локальный adapter manager и application service и владеет закрытием PostgreSQL pool. API запускает этот Core в процессе, HTTP handlers вызывают его напрямую.
 
 Wails service facade в `desktop/` вызывает `application.Service` напрямую. `cmd/carvion-api` остаётся отдельной точкой входа; Desktop не вызывает локальный HTTP API.
 
@@ -37,12 +38,13 @@ Wails service facade в `desktop/` вызывает `application.Service` нап
 | `desktop/frontend/` | React/TypeScript интерфейс, Wails-generated bindings, UI primitives и Playwright E2E |
 | `pkg/adaptersdk/v1/` | Публичный Go contract и JSON-RPC server |
 | `internal/core/domain/` | Domain types и ошибки |
-| `internal/core/application/` | Application service и порты `AdapterGateway` / `CatalogRepository` |
+| `internal/core/application/` | Application service, simulator orchestration и порты `AdapterGateway` / `CatalogRepository` |
 | `internal/core/infrastructure/` | PostgreSQL catalog repository и adapter bridge к SDK/Manager |
 | `internal/composition/` | Создание local runtime и lifecycle PostgreSQL pool |
+| `internal/simulator/` | Embedded synthetic profile catalog и Android XML fixture, общие для Core и demo adapter |
 | `internal/` | Также config, DB pool, HTTP transport, Plugin Manager, demo adapter и тесты |
 | `adapters/` | Demo `manifest.json`; `bin/` содержит generated executable после build |
-| `db/migrations/` | Две Goose migrations |
+| `db/migrations/` | Три Goose migrations, включая проекты и данные Localization Engine |
 | `docs/` | Существующие заметки SDK/архитектуры и новая проектная документация |
 | `.github/workflows/ci.yml` | Go format check, vet, unit tests и build |
 | `.idea/` | Локальные IDE project settings; не часть runtime architecture |
@@ -68,7 +70,7 @@ Wails service facade в `desktop/` вызывает `application.Service` нап
 
 HTTP API остаётся отдельным transport и текущей точкой входа для Hub/API процесса. Существующие маршруты сохранены. По HTTP доступны список адаптеров и проверка совместимости; `Detect` и `InspectResources` доступны через Core application service и Desktop bindings, отдельные HTTP routes для них пока отсутствуют.
 
-`CatalogRepository` реализован для чтения `manufacturers`, `vehicle_models`, `infotainment_platforms`. Остальные adapter/firmware/compatibility tables из SDK migration сохранены, но CRUD и синхронизация с локальным manifest catalog не реализованы. Будущий remote/Hub-backed repository должен реализовать тот же application port; такая реализация пока отсутствует.
+`CatalogRepository` читает `manufacturers`, `vehicle_models`, `infotainment_platforms`. `LocalizationRepository` хранит проекты, source snapshots, ресурсы, переводы, историю, validation runs и package artifacts. Adapter/firmware/compatibility tables из SDK migration сохранены, но CRUD и синхронизация с локальным manifest catalog не реализованы. Будущий remote/Hub-backed repository должен реализовать application ports; такая реализация пока отсутствует.
 
 ## Текущая Desktop-first архитектура — реализовано
 
@@ -84,6 +86,9 @@ ApplicationService (lifecycle + binding boundary)
 internal/composition.NewLocal → application.Service
   ├── domain / use cases / errors
   ├── CatalogRepository → local PostgreSQL (development)
+  ├── LocalizationRepository → local PostgreSQL (development)
+  ├── internal/localization → XML/JSON/CSV/validation/ZIP
+  ├── internal/simulator → whitelisted synthetic profiles/resources
   └── AdapterGateway → Plugin Manager → JSON-RPC subprocess
 
 cmd/carvion-api → HTTP handlers → same Core (separate Hub/API transport)
@@ -93,9 +98,12 @@ Wails bindings и HTTP handlers вызывают application services; Core не
 
 ## Архитектурные пробелы
 
-- Desktop foundation пока покрывает локальный read-only workflow; языковые пакеты, history и часть settings показывают placeholder views.
+- Android XML parser отклоняет inline nested markup и CDATA внутри переводимых строк; JSON поддерживает только схему `carvion.localization/v1`.
+- Localization workflow создаёт, редактирует, проверяет и экспортирует проекты; отдельный Language Packages screen и Operation History остаются placeholders.
+- Simulator вызывается прямо через Wails/Core. Core выбирает доступный адаптер по capabilities, останавливает workflow при `unknown`/`unsupported` и при `supported` строит проверенный CARVION ZIP. Synthetic fixtures встроены; автомобиль не подключается. Run events существуют только в текущем результате, а project/package persistence использует Localization repository.
+- Отдельных HTTP routes, migrations и direct database доступа адаптера для Simulator нет. Реальный JSON-RPC boundary проверяется отдельно от Playwright UI E2E backend.
 - Desktop startup требует `DATABASE_URL` и PostgreSQL. Production Desktop storage / Hub auth не реализованы.
-- PostgreSQL repository read-only и пока покрывает только три исходные catalog tables; adapter definitions, versions, hardware variants, firmware builds и compatibility rules доступны только через схему миграций.
+- `CatalogRepository` остаётся read-only и читает три исходные catalog tables. `LocalizationRepository` поддерживает транзакционную запись localization projects/resources/translations, append-only history, validation runs и package artifacts. Repositories/use cases для adapter definitions, versions, hardware variants, firmware builds и compatibility rules пока отсутствуют.
 - Таблицы `adapter_definitions` и связанные справочники не синхронизированы с локальной регистрацией Manager.
 - Hub-backed repository не реализован; механизм авторизации Desktop к Hub ещё требует проектирования.
 - Отдельный процесс не является OS sandbox. Каталог адаптеров должен оставаться доверенным.

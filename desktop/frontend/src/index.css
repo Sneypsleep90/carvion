@@ -134,6 +134,12 @@ button:disabled {
   background-image: radial-gradient(ellipse at 50% 30%, rgb(116 212 194 / 3%), transparent 55%);
 }
 
+.simulator-instrument {
+  background-image:
+    radial-gradient(ellipse at 100% 0%, rgb(116 212 194 / 7%), transparent 19rem),
+    linear-gradient(145deg, rgb(17 25 28 / 92%), rgb(16 22 25 / 96%));
+}
+
 .loading-orbit {
   animation: orbit-pulse 1.6s ease-in-out infinite;
 }

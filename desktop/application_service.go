@@ -12,6 +12,7 @@ import (
 
 	"github.com/Sneypsleep90/carvion/internal/composition"
 	"github.com/Sneypsleep90/carvion/internal/config"
+	"github.com/Sneypsleep90/carvion/internal/core/application"
 	"github.com/Sneypsleep90/carvion/internal/core/domain"
 	wailsapp "github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -40,6 +41,25 @@ type coreService interface {
 	InspectResources(context.Context, string, domain.InspectResourcesRequest) (domain.ResourceInspection, error)
 }
 
+type localizationCore interface {
+	ListLocalizationProjects(context.Context) ([]domain.LocalizationProjectSummary, error)
+	GetLocalizationProject(context.Context, string) (domain.LocalizationProject, error)
+	ImportLocalizationProject(context.Context, application.ImportLocalizationRequest) (domain.LocalizationProject, error)
+	ReplaceLocalizationSource(context.Context, string, string, []byte) (domain.LocalizationProject, error)
+	UpdateLocalizationTranslation(context.Context, string, string, string) (domain.LocalizationTranslation, error)
+	ApproveLocalizationTranslation(context.Context, string, string) (domain.LocalizationTranslation, error)
+	ImportLocalizationCSV(context.Context, string, []byte) (domain.LocalizationProject, error)
+	ExportLocalizationCSV(context.Context, string) (domain.LocalizationArtifact, error)
+	ExportLocalizationResources(context.Context, string) (domain.LocalizationArtifact, error)
+	ValidateLocalizationProject(context.Context, string) (domain.LocalizationValidationReport, error)
+	BuildLocalizationPackage(context.Context, string) (domain.LocalizationPackage, error)
+}
+
+type simulatorCore interface {
+	ListSimulatorProfiles(context.Context) ([]domain.SimulatorProfile, error)
+	RunSimulatorScenario(context.Context, string) (domain.SimulatorRunResult, error)
+}
+
 type managedRuntime interface {
 	Ping(context.Context) error
 	Close()
@@ -63,12 +83,13 @@ type ApplicationState struct {
 type ApplicationService struct {
 	mu sync.RWMutex
 
-	ctx          context.Context
-	core         coreService
-	runtime      managedRuntime
-	startupError string
-	loadConfig   func() (config.Config, error)
-	startRuntime runtimeStarter
+	ctx           context.Context
+	core          coreService
+	runtime       managedRuntime
+	startupError  string
+	loadConfig    func() (config.Config, error)
+	startRuntime  runtimeStarter
+	simulatorRuns map[string]context.CancelFunc
 }
 
 func NewApplicationService() *ApplicationService {
@@ -138,10 +159,15 @@ func (s *ApplicationService) ServiceStartup(ctx context.Context, _ wailsapp.Serv
 func (s *ApplicationService) ServiceShutdown() error {
 	s.mu.Lock()
 	runtime := s.runtime
+	simulatorRuns := s.simulatorRuns
+	s.simulatorRuns = nil
 	s.runtime = nil
 	s.core = nil
 	s.ctx = nil
 	s.mu.Unlock()
+	for _, cancel := range simulatorRuns {
+		cancel()
+	}
 
 	if runtime != nil {
 		runtime.Close()
@@ -257,6 +283,144 @@ func (s *ApplicationService) InspectResources(adapterID string, request domain.I
 	return core.InspectResources(ctx, adapterID, request)
 }
 
+func (s *ApplicationService) ListLocalizationProjects() ([]domain.LocalizationProjectSummary, error) {
+	ctx, core, err := s.localizationCoreSnapshot()
+	if err != nil {
+		return nil, err
+	}
+	return core.ListLocalizationProjects(ctx)
+}
+
+func (s *ApplicationService) GetLocalizationProject(projectID string) (domain.LocalizationProject, error) {
+	ctx, core, err := s.localizationCoreSnapshot()
+	if err != nil {
+		return domain.LocalizationProject{}, err
+	}
+	return core.GetLocalizationProject(ctx, projectID)
+}
+
+func (s *ApplicationService) ReplaceLocalizationSource(projectID, filename, content string) (domain.LocalizationProject, error) {
+	ctx, core, err := s.localizationCoreSnapshot()
+	if err != nil {
+		return domain.LocalizationProject{}, err
+	}
+	return core.ReplaceLocalizationSource(ctx, projectID, filename, []byte(content))
+}
+
+func (s *ApplicationService) ImportLocalizationProject(name, locale, format, filename, content string) (domain.LocalizationProject, error) {
+	ctx, core, err := s.localizationCoreSnapshot()
+	if err != nil {
+		return domain.LocalizationProject{}, err
+	}
+	return core.ImportLocalizationProject(ctx, application.ImportLocalizationRequest{
+		Name: name, Locale: locale, Format: domain.LocalizationFormat(format), Filename: filename, Content: []byte(content),
+	})
+}
+
+func (s *ApplicationService) UpdateLocalizationTranslation(projectID, resourceKey, targetText string) (domain.LocalizationTranslation, error) {
+	ctx, core, err := s.localizationCoreSnapshot()
+	if err != nil {
+		return domain.LocalizationTranslation{}, err
+	}
+	return core.UpdateLocalizationTranslation(ctx, projectID, resourceKey, targetText)
+}
+
+func (s *ApplicationService) ApproveLocalizationTranslation(projectID, resourceKey string) (domain.LocalizationTranslation, error) {
+	ctx, core, err := s.localizationCoreSnapshot()
+	if err != nil {
+		return domain.LocalizationTranslation{}, err
+	}
+	return core.ApproveLocalizationTranslation(ctx, projectID, resourceKey)
+}
+
+func (s *ApplicationService) ImportLocalizationCSV(projectID, content string) (domain.LocalizationProject, error) {
+	ctx, core, err := s.localizationCoreSnapshot()
+	if err != nil {
+		return domain.LocalizationProject{}, err
+	}
+	return core.ImportLocalizationCSV(ctx, projectID, []byte(content))
+}
+
+func (s *ApplicationService) ExportLocalizationCSV(projectID string) (domain.LocalizationArtifact, error) {
+	ctx, core, err := s.localizationCoreSnapshot()
+	if err != nil {
+		return domain.LocalizationArtifact{}, err
+	}
+	return core.ExportLocalizationCSV(ctx, projectID)
+}
+
+func (s *ApplicationService) ExportLocalizationResources(projectID string) (domain.LocalizationArtifact, error) {
+	ctx, core, err := s.localizationCoreSnapshot()
+	if err != nil {
+		return domain.LocalizationArtifact{}, err
+	}
+	return core.ExportLocalizationResources(ctx, projectID)
+}
+
+func (s *ApplicationService) ValidateLocalizationProject(projectID string) (domain.LocalizationValidationReport, error) {
+	ctx, core, err := s.localizationCoreSnapshot()
+	if err != nil {
+		return domain.LocalizationValidationReport{}, err
+	}
+	return core.ValidateLocalizationProject(ctx, projectID)
+}
+
+func (s *ApplicationService) BuildLocalizationPackage(projectID string) (domain.LocalizationPackage, error) {
+	ctx, core, err := s.localizationCoreSnapshot()
+	if err != nil {
+		return domain.LocalizationPackage{}, err
+	}
+	return core.BuildLocalizationPackage(ctx, projectID)
+}
+
+func (s *ApplicationService) ListSimulatorProfiles() ([]domain.SimulatorProfile, error) {
+	ctx, core, err := s.simulatorCoreSnapshot()
+	if err != nil {
+		return nil, err
+	}
+	return core.ListSimulatorProfiles(ctx)
+}
+
+func (s *ApplicationService) RunSimulatorScenario(profileID, requestID string) (domain.SimulatorRunResult, error) {
+	if strings.TrimSpace(requestID) == "" || len(requestID) > 128 {
+		return domain.SimulatorRunResult{}, fmt.Errorf("%w: simulator request ID must be between 1 and 128 bytes", domain.ErrInvalidArgument)
+	}
+	ctx, core, err := s.simulatorCoreSnapshot()
+	if err != nil {
+		return domain.SimulatorRunResult{}, err
+	}
+	runCtx, cancel := context.WithCancel(ctx)
+	s.mu.Lock()
+	if s.simulatorRuns == nil {
+		s.simulatorRuns = make(map[string]context.CancelFunc)
+	}
+	if _, exists := s.simulatorRuns[requestID]; exists {
+		s.mu.Unlock()
+		cancel()
+		return domain.SimulatorRunResult{}, fmt.Errorf("%w: simulator request ID is already active", domain.ErrInvalidArgument)
+	}
+	s.simulatorRuns[requestID] = cancel
+	s.mu.Unlock()
+	defer func() {
+		s.mu.Lock()
+		delete(s.simulatorRuns, requestID)
+		s.mu.Unlock()
+		cancel()
+	}()
+	return core.RunSimulatorScenario(runCtx, profileID)
+}
+
+func (s *ApplicationService) CancelSimulatorScenario(requestID string) bool {
+	s.mu.RLock()
+	cancel := s.simulatorRuns[requestID]
+	s.mu.RUnlock()
+	if cancel == nil {
+		return false
+	}
+	cancel()
+	return true
+}
+
 func (s *ApplicationService) coreSnapshot() (context.Context, coreService, error) {
 	ctx, core, _, startupError := s.snapshot()
 	if err := ctx.Err(); err != nil {
@@ -270,6 +434,30 @@ func (s *ApplicationService) coreSnapshot() (context.Context, coreService, error
 		return nil, nil, fmt.Errorf("%w: %s", ErrCoreUnavailable, detail)
 	}
 	return ctx, core, nil
+}
+
+func (s *ApplicationService) localizationCoreSnapshot() (context.Context, localizationCore, error) {
+	ctx, core, err := s.coreSnapshot()
+	if err != nil {
+		return nil, nil, err
+	}
+	localized, ok := core.(localizationCore)
+	if !ok {
+		return nil, nil, fmt.Errorf("%w: localization service is unavailable", ErrCoreUnavailable)
+	}
+	return ctx, localized, nil
+}
+
+func (s *ApplicationService) simulatorCoreSnapshot() (context.Context, simulatorCore, error) {
+	ctx, core, err := s.coreSnapshot()
+	if err != nil {
+		return nil, nil, err
+	}
+	simulator, ok := core.(simulatorCore)
+	if !ok {
+		return nil, nil, fmt.Errorf("%w: simulator service is unavailable", ErrCoreUnavailable)
+	}
+	return ctx, simulator, nil
 }
 
 func (s *ApplicationService) snapshot() (context.Context, coreService, managedRuntime, string) {

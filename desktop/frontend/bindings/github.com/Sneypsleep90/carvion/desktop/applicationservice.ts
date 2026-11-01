@@ -19,6 +19,18 @@ import * as domain$0 from "../internal/core/domain/models.js";
 // @ts-ignore: Unused imports
 import * as $models from "./models.js";
 
+export function ApproveLocalizationTranslation(projectID: string, resourceKey: string): $CancellablePromise<domain$0.LocalizationTranslation> {
+    return $Call.ByID(856366548, projectID, resourceKey);
+}
+
+export function BuildLocalizationPackage(projectID: string): $CancellablePromise<domain$0.LocalizationPackage> {
+    return $Call.ByID(778118136, projectID);
+}
+
+export function CancelSimulatorScenario(requestID: string): $CancellablePromise<boolean> {
+    return $Call.ByID(3308972987, requestID);
+}
+
 export function CheckCompatibility(adapterID: string, request: domain$0.CompatibilityRequest): $CancellablePromise<domain$0.CompatibilityResult> {
     return $Call.ByID(3465918495, adapterID, request);
 }
@@ -27,8 +39,28 @@ export function DetectVehicle(adapterID: string, identity: domain$0.VehicleIdent
     return $Call.ByID(288625776, adapterID, identity);
 }
 
+export function ExportLocalizationCSV(projectID: string): $CancellablePromise<domain$0.LocalizationArtifact> {
+    return $Call.ByID(314347272, projectID);
+}
+
+export function ExportLocalizationResources(projectID: string): $CancellablePromise<domain$0.LocalizationArtifact> {
+    return $Call.ByID(4030860565, projectID);
+}
+
 export function GetApplicationState(): $CancellablePromise<$models.ApplicationState> {
     return $Call.ByID(1987557658);
+}
+
+export function GetLocalizationProject(projectID: string): $CancellablePromise<domain$0.LocalizationProject> {
+    return $Call.ByID(2920421713, projectID);
+}
+
+export function ImportLocalizationCSV(projectID: string, content: string): $CancellablePromise<domain$0.LocalizationProject> {
+    return $Call.ByID(3192829533, projectID, content);
+}
+
+export function ImportLocalizationProject(name: string, locale: string, format: string, filename: string, content: string): $CancellablePromise<domain$0.LocalizationProject> {
+    return $Call.ByID(1519076528, name, locale, format, filename, content);
 }
 
 export function InspectResources(adapterID: string, request: domain$0.InspectResourcesRequest): $CancellablePromise<domain$0.ResourceInspection> {
@@ -43,10 +75,34 @@ export function ListInfotainmentPlatforms(manufacturerID: string): $CancellableP
     return $Call.ByID(3695902489, manufacturerID);
 }
 
+export function ListLocalizationProjects(): $CancellablePromise<domain$0.LocalizationProjectSummary[] | null> {
+    return $Call.ByID(269602876);
+}
+
 export function ListManufacturers(): $CancellablePromise<domain$0.Manufacturer[] | null> {
     return $Call.ByID(2903165319);
 }
 
+export function ListSimulatorProfiles(): $CancellablePromise<domain$0.SimulatorProfile[] | null> {
+    return $Call.ByID(1197289001);
+}
+
 export function ListVehicleModels(manufacturerID: string): $CancellablePromise<domain$0.VehicleModel[] | null> {
     return $Call.ByID(3899464795, manufacturerID);
+}
+
+export function ReplaceLocalizationSource(projectID: string, filename: string, content: string): $CancellablePromise<domain$0.LocalizationProject> {
+    return $Call.ByID(3247450521, projectID, filename, content);
+}
+
+export function RunSimulatorScenario(profileID: string, requestID: string): $CancellablePromise<domain$0.SimulatorRunResult> {
+    return $Call.ByID(4224615192, profileID, requestID);
+}
+
+export function UpdateLocalizationTranslation(projectID: string, resourceKey: string, targetText: string): $CancellablePromise<domain$0.LocalizationTranslation> {
+    return $Call.ByID(3812902754, projectID, resourceKey, targetText);
+}
+
+export function ValidateLocalizationProject(projectID: string): $CancellablePromise<domain$0.LocalizationValidationReport> {
+    return $Call.ByID(2040993209, projectID);
 }

@@ -1,0 +1,110 @@
+{
+  "profiles": [
+    {
+      "id": "demo-android-platform-a",
+      "name": "Demo Android Platform A",
+      "description": "Synthetic Android test device, profile A.",
+      "synthetic": true,
+      "identity": {
+        "manufacturer": "CARVION TEST LAB",
+        "model": "Android Demo Unit",
+        "platform_id": "android-demo-platform"
+      },
+      "hardware": {
+        "platform_id": "android-demo-platform",
+        "revision": "rev-a"
+      },
+      "firmware": {
+        "build_id": "demo-build-a-001",
+        "version": "1.0.0-demo"
+      },
+      "expectedCompatibility": "supported",
+      "known_firmware": true
+    },
+    {
+      "id": "demo-android-platform-b",
+      "name": "Demo Android Platform B",
+      "description": "Synthetic Android test device, profile B.",
+      "synthetic": true,
+      "identity": {
+        "manufacturer": "CARVION TEST LAB",
+        "model": "Android Demo Unit B",
+        "platform_id": "android-demo-platform-b"
+      },
+      "hardware": {
+        "platform_id": "android-demo-platform-b",
+        "revision": "rev-b"
+      },
+      "firmware": {
+        "build_id": "demo-build-b-001",
+        "version": "2.0.0-demo"
+      },
+      "expectedCompatibility": "supported",
+      "known_firmware": true
+    },
+    {
+      "id": "unknown-firmware",
+      "name": "Unknown Firmware",
+      "description": "Synthetic device with an unlisted firmware build.",
+      "synthetic": true,
+      "identity": {
+        "manufacturer": "CARVION TEST LAB",
+        "model": "Android Demo Unit",
+        "platform_id": "android-demo-platform"
+      },
+      "hardware": {
+        "platform_id": "android-demo-platform",
+        "revision": "rev-a"
+      },
+      "firmware": {
+        "build_id": "synthetic-unlisted-build",
+        "version": "9.9.9-demo"
+      },
+      "expectedCompatibility": "unknown",
+      "known_firmware": false
+    },
+    {
+      "id": "incompatible-hardware",
+      "name": "Incompatible Hardware",
+      "description": "Synthetic device with an exact build but an unsupported hardware revision.",
+      "synthetic": true,
+      "identity": {
+        "manufacturer": "CARVION TEST LAB",
+        "model": "Android Demo Unit",
+        "platform_id": "android-demo-platform"
+      },
+      "hardware": {
+        "platform_id": "android-demo-platform",
+        "revision": "rev-incompatible"
+      },
+      "firmware": {
+        "build_id": "demo-build-a-001",
+        "version": "1.0.0-demo"
+      },
+      "expectedCompatibility": "unsupported",
+      "known_firmware": true
+    },
+    {
+      "id": "simulated-communication-failure",
+      "name": "Simulated Communication Failure",
+      "description": "Synthetic scenario that makes the demo adapter return a controlled RPC error.",
+      "synthetic": true,
+      "identity": {
+        "manufacturer": "CARVION TEST LAB",
+        "model": "Android Demo Unit",
+        "platform_id": "android-demo-platform"
+      },
+      "hardware": {
+        "platform_id": "android-demo-platform",
+        "revision": "rev-a"
+      },
+      "firmware": {
+        "build_id": "synthetic-rpc-error",
+        "version": "1.0.0-demo-error"
+      },
+      "expectedCompatibility": "unknown",
+      "known_firmware": false,
+      "fault_mode": "rpc-error"
+    }
+  ]
+}

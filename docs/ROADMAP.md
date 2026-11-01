@@ -8,8 +8,8 @@
 | Step 1 | Desktop-First Core Refactoring | Выполнено 2026-11-01; Core вызывает Go-сервисы напрямую, HTTP сохранён отдельным transport |
 | Step 2 | Wails Desktop Foundation | Выполнено 2026-11-01; Wails app, React UI, direct bindings и macOS packaging |
 | Step 3 | Adapter SDK & Plugin Manager | Выполнено 2026-11-01; manifest v2, SDK contract, process RPC и Desktop adapter selection |
-| Step 4 | Localization Engine | Следующий этап |
-| Step 5 | CARVION Simulator | Запланировано; синтетические сценарии должны быть явно отделены от реальных систем |
+| Step 4 | Localization Engine | Выполнено 2026-11-01; детали в `docs/localization/` |
+| Step 5 | CARVION Simulator | Выполнено 2026-11-01; детали и реальные результаты — `docs/simulator/` |
 | Step 6 | Geely Research Adapter | Запланировано; источники и данные требуют исследования, поддержка не заявлена |
 | Step 7 | Deployment Engine | Запланировано; только разрешённые и документированные операции |
 | Step 8 | CARVION Hub & Commercial Platform | Запланировано |
@@ -32,13 +32,13 @@
 
 SDK API v1 сохранён; manifest schema v2 объявляет SDK SemVer, входные типы и форматы ресурсов. Manager валидирует manifest, обнаруживает trusted local packages, регистрирует только процесс с совпадающим `GetInfo`, выполняет JSON-RPC 2.0 через stdin/stdout и обрабатывает malformed responses, errors, parent cancellation и timeout. `adapter-android-demo` остаётся синтетическим. Desktop показывает metadata и последний runtime status; Diagnostics и Localization вызывают выбранный адаптер только при наличии нужной capability/формата. Тесты покрывают SDK/API mismatch, process launch/routing, timeout, ошибки RPC и UI selection. Процессы не являются OS sandbox; Hub distribution, package signing и реальные автомобильные данные не реализованы.
 
-### Step 4 — Localization Engine
+### Step 4 — Localization Engine — выполнено 2026-11-01
 
-Построить workflow анализа ресурсов, каталога переводов, review и экспорта. Определить формат проекта, историю и проверяемость изменений. Использовать явный вход пользователя или разрешённый источник; deployment сюда не включать.
+Добавлены Android XML (`string`, `string-array`, `plurals`), JSON `carvion.localization/v1`, CSV import/export, проекты локализации, переводы `draft`/`approved`/`needs_review`, проверка placeholders/plurals/UTF-8 и source SHA-256 review. PostgreSQL хранит проекты, ресурсы, переводы, append-only историю, validation runs и ZIP artifacts. Wails Localization screen напрямую вызывает Go Core для импорта, редактирования, review, экспорта и package build. Package помечен как CARVION localization (`oem_firmware=false`). HTTP endpoints для Desktop workflow не добавлялись. Nested XML markup и CDATA внутри переводимых строк пока отклоняются. См. [localization/ENGINE.md](localization/ENGINE.md).
 
-### Step 5 — CARVION Simulator
+### Step 5 — CARVION Simulator — выполнено 2026-11-01
 
-Развить изолированный симулятор для сценариев без настоящего автомобиля. Маркировать сценарии и данные как synthetic и проверять их автоматическими тестами.
+Добавлен единый локальный каталог synthetic profiles и ресурсов; Demo Adapter использует его в отдельном JSON-RPC процессе. Core выбирает адаптер по capabilities, повторно сверяет точную identity, hardware и firmware, останавливает unknown/unsupported до localization, а для поддержанного тестового профиля импортирует ресурсы, валидирует русские переводы и проверяет ZIP, SHA-256 и `oem_firmware=false`. Wails Simulator screen вызывает Core напрямую, показывает события, умеет отменять сценарий и скачивать пакет. Проверки включают unit/service, E2E, реальный subprocess RPC и PostgreSQL integration на изолированной базе. Профили и package — только synthetic; подключения к автомобилю и установки нет. Подробности: [simulator/OVERVIEW.md](simulator/OVERVIEW.md), [simulator/TEST_RESULTS.md](simulator/TEST_RESULTS.md).
 
 ### Step 6 — Geely Research Adapter
 
