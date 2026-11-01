@@ -52,9 +52,9 @@ func TestDeploymentTransitionRejectsIllegalState(t *testing.T) {
 
 **Файлы:** создать `internal/deployment/package_verifier.go`, `internal/deployment/package_verifier_test.go`.
 
-- [ ] **Step 1: Написать tests** для пакета от `localization.BuildPackage`, hash mismatch, изменённого checksum, corrupt ZIP, duplicate/traversal entry, unknown entry, oversized entry, `oem_firmware=true`, invalid schema и `validation.json` с `Valid=false`.
-- [ ] **Step 2: Запустить** `go test ./internal/deployment -run TestVerifyLanguagePackage -count=1`; ожидать package/function отсутствует.
-- [ ] **Step 3: Объявить контракт**:
+- [x] **Step 1: Написать tests** для пакета от `localization.BuildPackage`, hash mismatch, изменённого checksum, corrupt ZIP, duplicate/traversal entry, unknown entry, oversized entry, `oem_firmware=true`, invalid schema и `validation.json` с `Valid=false`.
+- [x] **Step 2: Запустить** `go test ./internal/deployment -run TestVerifyLanguagePackage -count=1`; первоначально получил ожидаемый compile failure до реализации `VerifyLanguagePackage` и `MaxDeploymentPackageBytes`.
+- [x] **Step 3: Объявить контракт**:
 
 ```go
 const MaxDeploymentPackageBytes = 16 << 20
@@ -67,9 +67,9 @@ type VerifiedPackage struct {
 func VerifyLanguagePackage(artifact []byte, expectedSHA256 string) (VerifiedPackage, error)
 ```
 
-- [ ] **Step 4: Реализовать verifier**: сначала проверить archive size и внешний SHA-256; ограничить число entries и суммарный uncompressed size; разрешать ровно `manifest.json`, `validation.json`, один `resources/<basename>` и `checksums.sha256`; отклонять дубли, абсолютные/parent paths и неизвестные файлы; строго декодировать manifest/report; требовать `carvion.language-package/v1`, `carvion-localization`, `oem_firmware=false`, `Valid=true`; проверить CRC при чтении и все entry checksums.
-- [ ] **Step 5: Запустить** полный `go test ./internal/deployment -count=1`; все валидные synthetic package tests должны проходить, каждое повреждение — возвращать ошибку до provider.
-- [ ] **Step 6: Commit** `feat: verify deployment package integrity`.
+- [x] **Step 4: Реализовать verifier**: сначала проверить archive size и внешний SHA-256; ограничить число entries и суммарный uncompressed size; разрешать ровно `manifest.json`, `validation.json`, один `resources/<basename>` и `checksums.sha256`; отклонять дубли, абсолютные/parent paths и неизвестные файлы; строго декодировать manifest/report; требовать `carvion.language-package/v1`, `carvion-localization`, `oem_firmware=false`, `Valid=true`; проверить CRC при чтении и все entry checksums.
+- [x] **Step 5: Запустить** полный `go test ./internal/deployment -count=1`; тесты успешного синтетического пакета и отказов для повреждённых/небезопасных ZIP прошли.
+- [x] **Step 6: Commit** `feat: verify deployment package integrity`.
 
 ## Task 3: PostgreSQL migration и audit repository
 
