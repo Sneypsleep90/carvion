@@ -15,7 +15,7 @@
 | [DECISIONS.md](DECISIONS.md) | Архитектурные решения, причины и альтернативы |
 | [TESTING.md](TESTING.md) | Стратегия проверок и фактические результаты |
 | [KNOWN_ISSUES.md](KNOWN_ISSUES.md) | Архитектурные пробелы, ограничения и технический долг |
-| [NEXT_STEPS.md](NEXT_STEPS.md) | Ближайшие задачи Step 7 — Deployment Engine scope и safety design |
+| [NEXT_STEPS.md](NEXT_STEPS.md) | Ближайшие задачи Step 8 — CARVION Hub & Commercial Platform |
 | [DESKTOP.md](DESKTOP.md) | Интерфейс CARVION Studio, Wails bindings и локальные команды |
 | [adapters/README.md](adapters/README.md) | Индекс SDK и Plugin Manager |
 | [adapters/SDK.md](adapters/SDK.md) | Версии manifest и контракты SDK |

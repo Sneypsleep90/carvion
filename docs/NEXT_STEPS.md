@@ -23,7 +23,7 @@ Production deployment — отдельный нерешённый вопрос. 
 ## Оставшиеся ограничения
 
 - Geely hardware revisions и firmware build IDs для целевых лет не подтверждены; exact catalog пуст.
-- PostgreSQL integration test нового Geely import требует отдельный `CARVION_TEST_DATABASE_URL` и в текущем запуске не выполнялся.
+- PostgreSQL integration test Geely import прошёл в полном suite 2026-11-02 на отдельной временной базе; новые запуски требуют выделенную `CARVION_TEST_DATABASE_URL` и migrations.
 - Desktop dev режим требует локальную PostgreSQL; Hub repository и Hub auth не реализованы.
 - Android XML nested inline markup/CDATA пока отклоняется.
 - Language Packages и Operation History остаются отдельными placeholder экранами.

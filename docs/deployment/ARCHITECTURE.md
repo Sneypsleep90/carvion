@@ -2,7 +2,7 @@
 
 ## Состояние
 
-**Реализовано и проверено unit/E2E проверками:** Core job lifecycle, package verifier, synthetic provider, PostgreSQL repository, Wails facade и Desktop workspace. PostgreSQL integration tests написаны и компилируются, но требуют отдельной test database; в текущей сессии они не выполнялись против сервера БД.
+**Реализовано и проверено:** Core job lifecycle, package verifier, synthetic provider, PostgreSQL repository, Wails facade и Desktop workspace прошли unit/E2E проверки. PostgreSQL integration suite также прошёл против отдельного временного PostgreSQL 18 после применения migrations 00001–00004; БД была удалена после проверки. Повторные integration runs требуют выделенной тестовой БД.
 
 **Production deployment отсутствует и заблокирован политикой Core.** В коде `productionDeploymentEnabled = false`; настройки или UI не могут включить его.
 
