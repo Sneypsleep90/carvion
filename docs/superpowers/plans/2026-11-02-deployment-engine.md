@@ -33,7 +33,7 @@
 
 **Файлы:** создать `internal/core/domain/deployment.go`, `internal/core/domain/deployment_test.go`.
 
-- [ ] **Step 1: Написать failing tests** для enum значений, terminal states и разрешённых/запрещённых переходов.
+- [x] **Step 1: Написать failing tests** для enum значений, terminal states и разрешённых/запрещённых переходов.
 
 ```go
 func TestDeploymentTransitionRejectsIllegalState(t *testing.T) {
@@ -43,10 +43,10 @@ func TestDeploymentTransitionRejectsIllegalState(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Запустить** `go test ./internal/core/domain -run TestDeploymentTransitionRejectsIllegalState -count=1`; ожидать undefined deployment symbols.
-- [ ] **Step 3: Реализовать** `DeploymentMode` (`test`, `production`), `DeploymentState` (`queued`, `preflighting`, `blocked`, `preflight-passed`, `simulating`, `verifying`, `simulated`, `failed`, `cancelled`), `DeploymentCheckStatus`, `DeploymentJob`, `DeploymentEvent`, `DeploymentPreflight`, `DeploymentRequest` и `ValidateDeploymentTransition(from,to)`.
-- [ ] **Step 4: Добавить table-driven tests** на разрешённый путь `queued → preflighting → preflight-passed → simulating → verifying → simulated`, ветку blocked, terminal-state запреты и `failed`/`cancelled` только из нетерминального состояния; повторить команду из Step 2.
-- [ ] **Step 5: Commit** `feat: define deployment job domain`.
+- [x] **Step 2: Запустить** `go test ./internal/core/domain -run 'TestValidateDeploymentTransition|TestDeploymentStateTerminal' -count=1`; ожидаемый compile failure с отсутствующими deployment symbols подтверждён.
+- [x] **Step 3: Реализовать** `DeploymentMode` (`test`, `production`), `DeploymentState` (`queued`, `preflighting`, `blocked`, `preflight-passed`, `simulating`, `verifying`, `simulated`, `failed`, `cancelled`), `DeploymentCheckStatus`, `DeploymentJob`, `DeploymentEvent`, `DeploymentPreflight`, `DeploymentRequest` и `ValidateDeploymentTransition(from,to)`.
+- [x] **Step 4: Добавить table-driven tests** на разрешённый путь `queued → preflighting → preflight-passed → simulating → verifying → simulated`, ветку blocked, terminal-state запреты и `failed`/`cancelled` только из нетерминального состояния; команда `go test ./internal/core/domain -run 'TestValidateDeploymentTransition|TestDeploymentStateTerminal' -count=1` прошла.
+- [x] **Step 5: Commit** `feat: define deployment job domain`.
 
 ## Task 2: Package integrity verifier
 
