@@ -10,7 +10,7 @@
 | Step 3 | Adapter SDK & Plugin Manager | Выполнено 2026-11-01; manifest v2, SDK contract, process RPC и Desktop adapter selection |
 | Step 4 | Localization Engine | Выполнено 2026-11-01; детали в `docs/localization/` |
 | Step 5 | CARVION Simulator | Выполнено 2026-11-01; детали и реальные результаты — `docs/simulator/` |
-| Step 6 | Geely Research Adapter | Запланировано; источники и данные требуют исследования, поддержка не заявлена |
+| Step 6 | Geely Research Adapter | Исследовательский каркас реализован; точные конфигурации неизвестны, поддержка не заявлена |
 | Step 7 | Deployment Engine | Запланировано; только разрешённые и документированные операции |
 | Step 8 | CARVION Hub & Commercial Platform | Запланировано |
 
@@ -40,9 +40,9 @@ SDK API v1 сохранён; manifest schema v2 объявляет SDK SemVer, �
 
 Добавлен единый локальный каталог synthetic profiles и ресурсов; Demo Adapter использует его в отдельном JSON-RPC процессе. Core выбирает адаптер по capabilities, повторно сверяет точную identity, hardware и firmware, останавливает unknown/unsupported до localization, а для поддержанного тестового профиля импортирует ресурсы, валидирует русские переводы и проверяет ZIP, SHA-256 и `oem_firmware=false`. Wails Simulator screen вызывает Core напрямую, показывает события, умеет отменять сценарий и скачивать пакет. Проверки включают unit/service, E2E, реальный subprocess RPC и PostgreSQL integration на изолированной базе. Профили и package — только synthetic; подключения к автомобилю и установки нет. Подробности: [simulator/OVERVIEW.md](simulator/OVERVIEW.md), [simulator/TEST_RESULTS.md](simulator/TEST_RESULTS.md).
 
-### Step 6 — Geely Research Adapter
+### Step 6 — Geely Research Adapter — исследовательский каркас реализован 2026-11-01
 
-Сначала документировать источники и допустимые способы анализа. Создавать адаптер после подтверждения платформы, аппаратных ревизий, точных build identifiers и правомерности данных. До достаточных доказательств результат остаётся `unknown`; совместимость Geely не заявляется.
+Добавлены локальный process adapter, строгий versioned JSON profile, официальный evidence catalog с областью применимости, пустой exact compatibility catalog, XML/JSON resource analysis через существующий parser и Wails Geely Research Mode. Localization import сохраняет пользовательский файл только после сверки Core и adapter parser; диагностический отчёт не содержит resource content или filesystem path. Это не завершённое исследование аппаратуры: OS/build IDs и аппаратные ревизии Xingyue L / Monjaro 2022–2024 не установлены. В отсутствие полного проверенного правила статус `unknown`, поддержка Geely не заявлена. PostgreSQL schema/migration и HTTP routes для Desktop не добавлялись. См. [docs/research/geely/OVERVIEW.md](research/geely/OVERVIEW.md).
 
 ### Step 7 — Deployment Engine
 

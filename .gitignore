@@ -3,5 +3,6 @@
 /bin/
 /carvion-api
 /adapters/adapter-android-demo/bin/
+/adapters/adapter-geely-research/bin/
 *.test
 coverage.out

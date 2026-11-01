@@ -6,6 +6,13 @@ import type {
   CompatibilityRequest,
   CompatibilityResult,
   DetectionResult,
+  GeelyDiagnosticReport,
+  GeelyDiagnosticReportRequest,
+  GeelyLocalizationImportRequest,
+  GeelyLocalizationImportResult,
+  GeelyResearchAnalysis,
+  GeelyResearchEvidence,
+  GeelyResourceRequest,
   InfotainmentPlatform,
   InspectResourcesRequest,
 	LocalizationArtifact,
@@ -46,6 +53,11 @@ export type DesktopBackend = Readonly<{
   listSimulatorProfiles: () => Promise<ReadonlyArray<SimulatorProfile>>;
   runSimulatorScenario: (profileID: string, requestID: string) => Promise<SimulatorRunResult>;
   cancelSimulatorScenario: (requestID: string) => Promise<boolean>;
+  listGeelyResearchEvidence: () => Promise<ReadonlyArray<GeelyResearchEvidence>>;
+  analyzeGeelyProfile: (profileJSON: string) => Promise<GeelyResearchAnalysis>;
+  inspectGeelyResources: (request: GeelyResourceRequest) => Promise<ResourceInspection>;
+  importGeelyLocalizationProject: (request: GeelyLocalizationImportRequest) => Promise<GeelyLocalizationImportResult>;
+  buildGeelyDiagnosticReport: (request: GeelyDiagnosticReportRequest) => Promise<GeelyDiagnosticReport>;
 }>;
 
 export const desktopBackend: DesktopBackend = {
@@ -75,6 +87,11 @@ export const desktopBackend: DesktopBackend = {
   listSimulatorProfiles: async () => (await ApplicationService.ListSimulatorProfiles()) ?? [],
   runSimulatorScenario: (profileID, requestID) => ApplicationService.RunSimulatorScenario(profileID, requestID),
   cancelSimulatorScenario: (requestID) => ApplicationService.CancelSimulatorScenario(requestID),
+  listGeelyResearchEvidence: async () => (await ApplicationService.ListGeelyResearchEvidence()) ?? [],
+  analyzeGeelyProfile: (profileJSON) => ApplicationService.AnalyzeGeelyProfile(profileJSON),
+  inspectGeelyResources: (request) => ApplicationService.InspectGeelyResources(request),
+  importGeelyLocalizationProject: (request) => ApplicationService.ImportGeelyLocalizationProject(request),
+  buildGeelyDiagnosticReport: (request) => ApplicationService.BuildGeelyDiagnosticReport(request),
 };
 
 export type {
@@ -83,6 +100,13 @@ export type {
   CompatibilityRequest,
   CompatibilityResult,
   DetectionResult,
+  GeelyDiagnosticReport,
+  GeelyDiagnosticReportRequest,
+  GeelyLocalizationImportRequest,
+  GeelyLocalizationImportResult,
+  GeelyResearchAnalysis,
+  GeelyResearchEvidence,
+  GeelyResourceRequest,
   InfotainmentPlatform,
   InspectResourcesRequest,
   LocalizationArtifact,

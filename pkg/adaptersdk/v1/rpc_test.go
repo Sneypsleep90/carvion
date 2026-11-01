@@ -12,6 +12,7 @@ type testAdapter struct {
 	getInfoErr       error
 	invalidDetection bool
 	sdkVersion       string
+	vehicleProfile   string
 }
 
 func (a testAdapter) GetInfo(context.Context) (AdapterManifest, error) {
@@ -96,9 +97,12 @@ func (a testAdapter) Detect(_ context.Context, request DetectRequest) (Detection
 	}, nil
 }
 
-func (testAdapter) CheckCompatibility(_ context.Context, request CompatibilityRequest) (CompatibilityResult, error) {
+func (a testAdapter) CheckCompatibility(_ context.Context, request CompatibilityRequest) (CompatibilityResult, error) {
 	if request.Firmware.BuildID != "build-a" {
 		return CompatibilityResult{}, errors.New("firmware request was not passed to adapter")
+	}
+	if a.vehicleProfile != "" && string(request.VehicleProfile) != a.vehicleProfile {
+		return CompatibilityResult{}, errors.New("vehicle profile was not passed to adapter")
 	}
 	return CompatibilityResult{Status: StatusSupported}, nil
 }
@@ -188,6 +192,30 @@ func TestServeDispatchesCheckCompatibility(t *testing.T) {
 	}
 	if result.Status != StatusSupported {
 		t.Errorf("compatibility result = %+v, want supported", result)
+	}
+}
+
+func TestServeDispatchesCompatibilityVehicleProfile(t *testing.T) {
+	var output strings.Builder
+	const profile = `{"schema":"carvion.geely-research/v1","profile_id":"test-profile"}`
+	request := `{"jsonrpc":"2.0","id":"14","method":"CheckCompatibility","params":{"firmware":{"build_id":"build-a"},"vehicle_profile":` + profile + `}}` + "\n"
+
+	if err := Serve(context.Background(), strings.NewReader(request), &output, testAdapter{vehicleProfile: profile}); err != nil {
+		t.Fatalf("Serve() error = %v", err)
+	}
+	var response RPCResponse
+	if err := json.Unmarshal([]byte(output.String()), &response); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if response.Error != nil {
+		t.Fatalf("response error = %+v, want successful vehicle profile dispatch", response.Error)
+	}
+	var result CompatibilityResult
+	if err := json.Unmarshal(response.Result, &result); err != nil {
+		t.Fatalf("decode compatibility result: %v", err)
+	}
+	if result.Status != StatusSupported {
+		t.Fatalf("compatibility result = %+v, want supported", result)
 	}
 }
 

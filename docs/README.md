@@ -15,7 +15,7 @@
 | [DECISIONS.md](DECISIONS.md) | Архитектурные решения, причины и альтернативы |
 | [TESTING.md](TESTING.md) | Стратегия проверок и фактические результаты |
 | [KNOWN_ISSUES.md](KNOWN_ISSUES.md) | Архитектурные пробелы, ограничения и технический долг |
-| [NEXT_STEPS.md](NEXT_STEPS.md) | Ближайшие задачи Step 6 — исследование платформы |
+| [NEXT_STEPS.md](NEXT_STEPS.md) | Ближайшие задачи Step 7 — Deployment Engine scope и safety design |
 | [DESKTOP.md](DESKTOP.md) | Интерфейс CARVION Studio, Wails bindings и локальные команды |
 | [adapters/README.md](adapters/README.md) | Индекс SDK и Plugin Manager |
 | [adapters/SDK.md](adapters/SDK.md) | Версии manifest и контракты SDK |
@@ -30,6 +30,12 @@
 | [simulator/SCENARIOS.md](simulator/SCENARIOS.md) | Synthetic profiles и ожидаемые результаты сценариев |
 | [simulator/TEST_RESULTS.md](simulator/TEST_RESULTS.md) | Фактические проверки Simulator и их ограничения |
 | [research/README.md](research/README.md) | Индекс технических исследований платформ |
+| [research/geely/OVERVIEW.md](research/geely/OVERVIEW.md) | Реализованный файловый Research Adapter и его ограничения |
+| [research/geely/PLATFORMS.md](research/geely/PLATFORMS.md) | Факты и неизвестные по платформам |
+| [research/geely/FIRMWARE.md](research/geely/FIRMWARE.md) | Firmware/build IDs и точные правила сравнения |
+| [research/geely/SECURITY.md](research/geely/SECURITY.md) | Границы локальных файлов и отчёта |
+| [research/geely/OPEN_QUESTIONS.md](research/geely/OPEN_QUESTIONS.md) | Неизвестные технические параметры |
+| [research/geely/EVIDENCE.md](research/geely/EVIDENCE.md) | Источники, даты и область подтверждения |
 
 ## Статусные обозначения
 

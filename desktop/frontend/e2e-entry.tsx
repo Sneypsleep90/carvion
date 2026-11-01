@@ -8,6 +8,54 @@ import "./src/index.css";
 let localizationProject: LocalizationProject | null = null;
 const cancelledSimulatorRequests = new Set<string>();
 
+const geelyProfileFields = (profileJSON: string) => {
+  const profile = JSON.parse(profileJSON) as {
+    schema: string;
+    profile_id: string;
+    vehicle?: { manufacturer?: string; model?: string; model_year?: number; market?: string; trim?: string };
+    infotainment?: { platform?: string; os_name?: string; os_version?: string; hardware_identifier?: string; hardware_revision?: string; firmware_version?: string; firmware_build_id?: string };
+  };
+  return {
+    schema: profile.schema,
+    profileId: profile.profile_id,
+    manufacturer: profile.vehicle?.manufacturer ?? "",
+    model: profile.vehicle?.model ?? "",
+    modelYear: profile.vehicle?.model_year ?? 0,
+    market: profile.vehicle?.market ?? "",
+    trim: profile.vehicle?.trim ?? "",
+    platform: profile.infotainment?.platform ?? "",
+    osName: profile.infotainment?.os_name ?? "",
+    osVersion: profile.infotainment?.os_version ?? "",
+    hardwareIdentifier: profile.infotainment?.hardware_identifier ?? "",
+    hardwareRevision: profile.infotainment?.hardware_revision ?? "",
+    firmwareVersion: profile.infotainment?.firmware_version ?? "",
+    firmwareBuildId: profile.infotainment?.firmware_build_id ?? "",
+    origin: "imported-file-unverified",
+  };
+};
+
+const geelyAnalysis = (profileJSON: string) => {
+  const profile = geelyProfileFields(profileJSON);
+  return {
+    profile,
+    detection: {
+      Status: CompatibilityStatus.StatusUnknown,
+      Identity: { Manufacturer: profile.manufacturer, Model: profile.model, PlatformID: profile.platform },
+      Reason: "Imported file values only; no vehicle connection was made.",
+    },
+    compatibility: {
+      Status: CompatibilityStatus.StatusUnknown,
+      Reason: "E2E fixture contains no exact reviewed compatibility record.",
+    },
+  };
+};
+
+const geelyEvidence = [{
+  id: "test-evidence-only", title: "Synthetic Geely research source fixture", publisher: "CARVION E2E",
+  url: "https://example.invalid/geely-research-fixture", publishedAt: "", retrievedAt: "2026-11-01",
+  scope: "Только фикстура Playwright; не является техническим утверждением о мультимедиа Geely.", confidence: "test-fixture",
+}];
+
 const simulatorProfiles: ReadonlyArray<SimulatorProfile> = [
   {
     id: "demo-android-platform-a", name: "Demo Android Platform A", description: "Synthetic Android test device, profile A.", synthetic: true,
@@ -193,6 +241,44 @@ const backend: DesktopBackend = {
     cancelledSimulatorRequests.add(requestID);
     return true;
   },
+  listGeelyResearchEvidence: async () => geelyEvidence,
+  analyzeGeelyProfile: async (profileJSON) => geelyAnalysis(profileJSON),
+  inspectGeelyResources: async (request) => ({
+    Resources: parseSyntheticResources(request.content)
+      .filter((resource) => resource.translatable && resource.present)
+      .map((resource) => ({ ID: resource.key, Text: resource.sourceText })),
+  }),
+  importGeelyLocalizationProject: async (request) => {
+    const resources = parseSyntheticResources(request.content);
+    localizationProject = {
+      id: "geely-research-e2e-project",
+      name: request.name,
+      locale: request.locale,
+      format: request.format,
+      filename: request.filename,
+      sourceSha256: "synthetic-geely-source-sha256",
+      resources,
+      translations: [],
+    };
+    return {
+      project: localizationProject,
+      analysis: geelyAnalysis(request.profileJson),
+      inspection: { Resources: resources.filter((resource) => resource.translatable).map((resource) => ({ ID: resource.key, Text: resource.sourceText })) },
+    };
+  },
+  buildGeelyDiagnosticReport: async (request) => {
+    const profile = geelyProfileFields(request.profileJson);
+    const resource = request.resource ? {
+      filename: request.resource.filename.split(/[\\/]/).pop() ?? request.resource.filename,
+      format: request.resource.format,
+      sha256: "synthetic-resource-hash",
+      keys: parseSyntheticResources(request.resource.content).filter((item) => item.translatable).map((item) => item.key),
+    } : undefined;
+    return {
+      filename: "carvion-geely-diagnostic-report.json",
+      content: JSON.stringify({ schema: "test-report-only", profile, compatibility: geelyAnalysis(request.profileJson).compatibility, ...(resource ? { resource } : {}) }, null, 2),
+    };
+  },
 };
 
 function createSimulatorRun(profileID: string): SimulatorRunResult {
@@ -261,6 +347,15 @@ function createCancelledSimulatorRun(profileID: string): SimulatorRunResult {
 
 function parseSyntheticResources(content: string): NonNullable<LocalizationProject["resources"]> {
   const resources: NonNullable<LocalizationProject["resources"]> = [];
+  if (content.trimStart().startsWith("{")) {
+    const document = JSON.parse(content) as { schema?: string; resources?: ReadonlyArray<{ key?: string; kind?: string; text?: string; translatable?: boolean }> };
+    if (document.schema !== "carvion.localization/v1" || !Array.isArray(document.resources)) throw new Error("invalid synthetic localization JSON");
+    for (const item of document.resources) {
+      if (!item.key) continue;
+      resources.push({ key: item.key, kind: LocalizationResourceKind.ResourceKindString, sourceText: item.text ?? "", sourceSha256: `hash-${item.key}-${item.text ?? ""}`, order: resources.length, translatable: item.translatable !== false, formatted: true, present: true });
+    }
+    return resources;
+  }
   for (const match of content.matchAll(/<string\b([^>]*)>([\s\S]*?)<\/string>/g)) {
     const attrs = match[1] ?? "";
     const key = attrs.match(/name="([^"]+)"/)?.[1] ?? "";

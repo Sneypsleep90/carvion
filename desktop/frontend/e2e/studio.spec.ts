@@ -1,4 +1,12 @@
 import { expect, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
+
+const testOnlyProfile = JSON.stringify({
+  schema: "carvion.geely-research/v1",
+  profile_id: "test-only-profile",
+  vehicle: { manufacturer: "TEST ONLY", model: "TEST ONLY", model_year: 2024, market: "TEST ONLY", trim: "TEST ONLY" },
+  infotainment: { platform: "TEST ONLY", os_name: "TEST ONLY", os_version: "TEST ONLY", hardware_identifier: "TEST ONLY", hardware_revision: "TEST ONLY", firmware_version: "TEST ONLY", firmware_build_id: "TEST ONLY" },
+});
 
 test("shows synthetic adapter status and opens the adapter workspace", async ({ page }) => {
   await page.goto("/e2e.html");
@@ -14,6 +22,78 @@ test("shows synthetic adapter status and opens the adapter workspace", async ({ 
   await expect(page.getByText("android-strings-xml", { exact: true })).toBeVisible();
   await expect(page.getByText("compatibility-profile", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("ПОСЛЕДНИЙ ВЫЗОВ: ОШИБКА", { exact: true })).toBeVisible();
+});
+
+test("analyzes a file profile, imports XML to Localization, and exports a private diagnostic report", async ({ page }) => {
+  await page.goto("/e2e.html");
+  await page.getByRole("button", { name: "Исследование Geely" }).click();
+  await expect(page.getByRole("heading", { name: "Исследование Geely" })).toBeVisible();
+
+  await page.getByLabel("JSON профиль Geely").setInputFiles({
+    name: "test-only-profile.json", mimeType: "application/json", buffer: Buffer.from(testOnlyProfile),
+  });
+  await page.getByLabel("XML или JSON ресурс").setInputFiles({
+    name: "strings.xml", mimeType: "text/xml", buffer: Buffer.from('<resources><string name="title">SYNTHETIC ONLY RESOURCE TEXT</string></resources>'),
+  });
+  await page.getByRole("button", { name: "Анализировать профиль" }).click();
+  await expect(page.getByText("Неизвестно · точной записи нет", { exact: true })).toBeVisible();
+  await expect(page.getByText("ИЗ ФАЙЛА · НЕ ПРОВЕРЕНО", { exact: true })).toBeVisible();
+  await expect(page.getByText("Synthetic Geely research source fixture", { exact: true })).toBeVisible();
+  await expect(page.getByText("Только фикстура Playwright; не является техническим утверждением о мультимедиа Geely.", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Анализировать ресурсы" }).click();
+  await expect(page.getByText("SYNTHETIC ONLY RESOURCE TEXT", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Создать проект локализации" }).click();
+  await expect(page.getByText(/Создан локальный проект/)).toBeVisible();
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Экспортировать отчёт" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("carvion-geely-diagnostic-report.json");
+  const downloadPath = await download.path();
+  expect(downloadPath).not.toBeNull();
+  const report = await readFile(downloadPath!, "utf8");
+  expect(report).toContain("\"keys\": [\n      \"title\"");
+  expect(report).not.toContain("SYNTHETIC ONLY RESOURCE TEXT");
+  expect(report).not.toContain("/Users/");
+
+  await page.getByRole("button", { name: "Открыть созданный проект" }).click();
+  await expect(page.getByRole("heading", { name: "Строки проекта" })).toBeVisible();
+  await expect(page.getByText("SYNTHETIC ONLY RESOURCE TEXT", { exact: true })).toBeVisible();
+});
+
+test("inspects a separate versioned JSON localization resource", async ({ page }) => {
+  await page.goto("/e2e.html");
+  await page.getByRole("button", { name: "Исследование Geely" }).click();
+  await page.getByLabel("JSON профиль Geely").setInputFiles({
+    name: "test-only-profile.json", mimeType: "application/json", buffer: Buffer.from(testOnlyProfile),
+  });
+  await page.getByLabel("XML или JSON ресурс").setInputFiles({
+    name: "strings.json", mimeType: "application/json",
+    buffer: Buffer.from('{"schema":"carvion.localization/v1","resources":[{"key":"demo.title","kind":"string","text":"Synthetic JSON text"}]}'),
+  });
+  await page.getByRole("button", { name: "Анализировать ресурсы" }).click();
+  await expect(page.getByText("Отдельный Android strings.xml или carvion-json-v1", { exact: true })).toBeVisible();
+  await expect(page.getByText("demo.title", { exact: true })).toBeVisible();
+  await expect(page.getByText("Synthetic JSON text", { exact: true })).toBeVisible();
+});
+
+test("rejects oversized profile and resource files before processing them", async ({ page }) => {
+  await page.goto("/e2e.html");
+  await page.getByRole("button", { name: "Исследование Geely" }).click();
+
+  const oversized = Buffer.alloc(128 * 1024 + 1, 0x61);
+  await page.getByLabel("JSON профиль Geely").setInputFiles({
+    name: "oversized-profile.json", mimeType: "application/json", buffer: oversized,
+  });
+  await expect(page.getByRole("alert")).toHaveText("Файл превышает допустимый размер 131072 байт.");
+  await expect(page.getByRole("button", { name: "Анализировать профиль" })).toBeDisabled();
+
+  await page.getByLabel("XML или JSON ресурс").setInputFiles({
+    name: "oversized-resource.xml", mimeType: "text/xml", buffer: oversized,
+  });
+  await expect(page.getByRole("alert")).toHaveText("Файл превышает допустимый размер 131072 байт.");
+  await expect(page.getByRole("button", { name: "Анализировать ресурсы" })).toBeDisabled();
 });
 
 test("marks an unknown vehicle as unknown in the compatibility workspace", async ({ page }) => {

@@ -28,7 +28,9 @@
 
 ## Данные и безопасность
 
-- **Реальных автомобильных данных нет:** demo profiles synthetic; Geely или другой производитель не поддерживается.
+- **Реальных vehicle compatibility records нет:** demo profiles остаются synthetic. Geely Research Adapter анализирует только выбранные пользователем файлы; его exact compatibility catalog пуст и поддержка Geely не заявлена.
+- **Geely configurations 2022–2024 неизвестны:** публичные Geely материалы, собранные в `docs/research/geely/EVIDENCE.md`, не дают проверенных firmware build IDs, hardware revisions и полного market/year/platform tuple. Любое неполное/неизвестное сочетание возвращает `unknown`.
+- **Geely PostgreSQL integration check не выполнен в текущей среде:** integration test добавлен, но `CARVION_TEST_DATABASE_URL` не задан. Результат unit/fake-repository tests не доказывает round-trip на PostgreSQL.
 - **Нет firmware deployment:** установка, изменение и запись firmware отсутствуют.
 - **Simulator ограничен тестовыми fixtures:** profiles, строки и переводы демонстрационные; event log хранится только в текущем результате, а настоящий Wails native UI не имеет автоматизированного UI-теста.
 - **Simulator workflow создаёт localization data:** локальные тестовые project/package записи сохраняются в существующих localization tables; отдельной истории прогонов нет.
@@ -37,6 +39,6 @@
 
 ## Тестовое покрытие
 
-- Go unit/service tests, `make lint`, `make build`, Desktop TypeScript/E2E/build и native macOS smoke прошли 2026-11-01; фактические команды записаны в [TESTING.md](TESTING.md) и [simulator/TEST_RESULTS.md](simulator/TEST_RESULTS.md).
+- Go unit/service tests, `make lint`, `make build`, Desktop TypeScript/E2E/build и native macOS smoke проходили на предыдущих этапах 2026-11-01; результаты Step 6 перечислены отдельно в [TESTING.md](TESTING.md).
 - PostgreSQL integration test проверяет чтение Foundation tables, rollback импортной транзакции и immutable translation history; все schema constraints ещё не покрыты отдельными automated tests.
-- Wails lifecycle имеет unit tests, UI имеет Playwright E2E с fake backend; полноценного native-window automation в CI нет. JSON-RPC process boundary и PostgreSQL persistence Simulator покрыты отдельными integration tests.
+- Wails lifecycle имеет unit tests, UI имеет Playwright E2E с synthetic fake backend; полноценного native-window automation в CI нет. JSON-RPC process boundary Geely покрыт process test; PostgreSQL import persistence имеет новый integration test, который нужно запустить с выделенным `CARVION_TEST_DATABASE_URL`.

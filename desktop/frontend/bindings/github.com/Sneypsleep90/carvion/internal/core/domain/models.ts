@@ -66,6 +66,76 @@ export interface FirmwareInfo {
     "Version": string;
 }
 
+export interface GeelyDiagnosticReport {
+    "filename": string;
+    "content": string;
+}
+
+export interface GeelyDiagnosticReportRequest {
+    "profileJson": string;
+    "resource"?: GeelyResourceRequest | null;
+}
+
+export interface GeelyLocalizationImportRequest {
+    "profileJson": string;
+    "name": string;
+    "locale": string;
+    "filename": string;
+    "format": LocalizationFormat;
+    "content": string;
+}
+
+export interface GeelyLocalizationImportResult {
+    "project": LocalizationProject;
+    "analysis": GeelyResearchAnalysis;
+    "inspection": ResourceInspection;
+}
+
+export interface GeelyResearchAnalysis {
+    "profile": GeelyResearchProfile;
+    "detection": DetectionResult;
+    "compatibility": CompatibilityResult;
+}
+
+export interface GeelyResearchEvidence {
+    "id": string;
+    "title": string;
+    "publisher": string;
+    "url": string;
+    "publishedAt"?: string;
+    "retrievedAt": string;
+    "scope": string;
+    "confidence": string;
+}
+
+/**
+ * GeelyResearchProfile contains file-reported values and their provenance.
+ * Imported profile data is never equivalent to live vehicle detection.
+ */
+export interface GeelyResearchProfile {
+    "schema": string;
+    "profileId": string;
+    "manufacturer"?: string;
+    "model"?: string;
+    "modelYear"?: number;
+    "market"?: string;
+    "trim"?: string;
+    "platform"?: string;
+    "osName"?: string;
+    "osVersion"?: string;
+    "hardwareIdentifier"?: string;
+    "hardwareRevision"?: string;
+    "firmwareVersion"?: string;
+    "firmwareBuildId"?: string;
+    "origin": string;
+}
+
+export interface GeelyResourceRequest {
+    "filename": string;
+    "format": LocalizationFormat;
+    "content": string;
+}
+
 export interface HardwareInfo {
     "PlatformID": string;
     "Revision": string;

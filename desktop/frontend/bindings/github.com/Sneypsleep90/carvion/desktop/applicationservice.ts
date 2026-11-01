@@ -19,8 +19,16 @@ import * as domain$0 from "../internal/core/domain/models.js";
 // @ts-ignore: Unused imports
 import * as $models from "./models.js";
 
+export function AnalyzeGeelyProfile(profileJSON: string): $CancellablePromise<domain$0.GeelyResearchAnalysis> {
+    return $Call.ByID(184332056, profileJSON);
+}
+
 export function ApproveLocalizationTranslation(projectID: string, resourceKey: string): $CancellablePromise<domain$0.LocalizationTranslation> {
     return $Call.ByID(856366548, projectID, resourceKey);
+}
+
+export function BuildGeelyDiagnosticReport(request: domain$0.GeelyDiagnosticReportRequest): $CancellablePromise<domain$0.GeelyDiagnosticReport> {
+    return $Call.ByID(3556549218, request);
 }
 
 export function BuildLocalizationPackage(projectID: string): $CancellablePromise<domain$0.LocalizationPackage> {
@@ -55,6 +63,10 @@ export function GetLocalizationProject(projectID: string): $CancellablePromise<d
     return $Call.ByID(2920421713, projectID);
 }
 
+export function ImportGeelyLocalizationProject(request: domain$0.GeelyLocalizationImportRequest): $CancellablePromise<domain$0.GeelyLocalizationImportResult> {
+    return $Call.ByID(4163734912, request);
+}
+
 export function ImportLocalizationCSV(projectID: string, content: string): $CancellablePromise<domain$0.LocalizationProject> {
     return $Call.ByID(3192829533, projectID, content);
 }
@@ -63,12 +75,20 @@ export function ImportLocalizationProject(name: string, locale: string, format: 
     return $Call.ByID(1519076528, name, locale, format, filename, content);
 }
 
+export function InspectGeelyResources(request: domain$0.GeelyResourceRequest): $CancellablePromise<domain$0.ResourceInspection> {
+    return $Call.ByID(2377997280, request);
+}
+
 export function InspectResources(adapterID: string, request: domain$0.InspectResourcesRequest): $CancellablePromise<domain$0.ResourceInspection> {
     return $Call.ByID(3794135526, adapterID, request);
 }
 
 export function ListAdapters(): $CancellablePromise<domain$0.AdapterInfo[] | null> {
     return $Call.ByID(1412596575);
+}
+
+export function ListGeelyResearchEvidence(): $CancellablePromise<domain$0.GeelyResearchEvidence[] | null> {
+    return $Call.ByID(373560897);
 }
 
 export function ListInfotainmentPlatforms(manufacturerID: string): $CancellablePromise<domain$0.InfotainmentPlatform[] | null> {

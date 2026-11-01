@@ -42,6 +42,7 @@ Generated bindings находятся в `desktop/frontend/bindings/github.com/S
 | Vehicles | Read-only manufacturer/model/platform каталог из Core/PostgreSQL |
 | Diagnostics | Ручной synthetic vehicle profile и `supported` / `unsupported` / `unknown` compatibility result |
 | Localization | Импорт Android XML/JSON, проекты и русские переводы, поиск, edit/approve, reimport source, validation, CSV/resource export и ZIP package download. Прямой Wails-to-Core вызов |
+| Исследование Geely | Загрузка versioned JSON profile и отдельного XML/JSON resource, file provenance, evidence со scope, строгий `unknown` без exact record, XML/JSON analysis, explicit import в Localization и приватный diagnostic report. Не подключается к автомобилю и не заявляет Geely support |
 | Simulator | Выбор synthetic профиля, запуск Core workflow через JSON-RPC demo process, event log, отмена, compatibility/package verification и загрузка тестового ZIP. Не подключается к автомобилю |
 | Language Packages | Placeholder отдельного экрана; сборка и скачивание доступны на экране Localization |
 | Adapters | Адаптеры из доверенного локального каталога и доступность Core |
@@ -90,4 +91,4 @@ make build
 - Desktop UI не получает database connection или credentials напрямую; Go composition владеет pool.
 - Hub-backed repository, remote mode, пользовательская Hub авторизация и offline policy не реализованы.
 - Adapter Manager запускает только доверенные локальные процессы из `ADAPTERS_DIR`; отдельный процесс сам по себе не является OS sandbox.
-- Нет сетевой загрузки адаптеров и доступа к автомобильному оборудованию.
+- Нет сетевой загрузки адаптеров и доступа к автомобильному оборудованию. Geely adapter анализирует только выбранные локальные файлы; модельные годы и сборки 2022–2024 пока не подтверждены.

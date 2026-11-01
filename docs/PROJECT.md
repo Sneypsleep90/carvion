@@ -10,6 +10,8 @@ CARVION — **Desktop-платформа** для анализа и локали
 
 Simulator также реализован и проверен: он запускает локальные synthetic profiles через `adapter-android-demo`, а Go Core выполняет compatibility и тестовый localization/package workflow. Подробности — в [обзоре и результатах](simulator/OVERVIEW.md).
 
+**Geely Research Adapter реализован как исследовательский каркас:** Desktop принимает пользовательский versioned JSON-профиль и отдельный XML/JSON ресурс, показывает значения как `из файла / не проверено`, анализирует ресурсы общим Localization parser, передаёт их в Localization Engine по явному действию и экспортирует очищенный диагностический отчёт. Поддержка Geely не заявлена: точные конфигурации 2022–2024 неизвестны, а каталог совместимости пуст. Источники и границы утверждений описаны в [docs/research/geely/](research/geely/OVERVIEW.md).
+
 **Реализовано частично:** Desktop экраны каталога и диагностики; Language Packages и Operation History пока placeholders. Сборка localization package доступна на экранах Localization и Simulator.
 
 **Не реализовано:** Hub-backed remote repository и Hub authentication, реальные автомобильные адаптеры, deployment и коммерческий Hub.

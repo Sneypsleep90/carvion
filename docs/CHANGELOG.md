@@ -2,6 +2,16 @@
 
 Здесь фиксируются фактические технические изменения; будущие планы приведены в [ROADMAP.md](ROADMAP.md).
 
+## 2026-11-01 — Geely Research Adapter
+
+- Добавлен strict `carvion.geely-research/v1` profile parser, ограниченные официальные evidence entries, пустой exact compatibility catalog, exact matcher и JSON diagnostic report. Profile schema ограничивает размеры/UTF-8/unknown fields и отклоняет VIN-подобные значения и credential assignments.
+- SDK обновлён до 1.1.0 без смены API major v1: optional `CompatibilityRequest.vehicle_profile` и manifest input type `vehicle-research-profile-json`.
+- Добавлены `adapter-geely-research` manifest/process, JSON-RPC Detect/CheckCompatibility/InspectResources и использование существующего Localization parser. Make targets собирают оба локальных adapter process.
+- Добавлены Core use cases для file profile, compatibility status, resource inspection, parser agreement, явного Localization import и приватного report. Wails facade и CARVION Studio получили экран «Исследование Geely».
+- Созданы `docs/research/geely/` документы: OVERVIEW, PLATFORMS, FIRMWARE, SECURITY, OPEN_QUESTIONS, EVIDENCE. Обновлены SDK protocol, architecture, roadmap, testing и project docs.
+- Desktop отклоняет файлы больше 128 KiB до чтения; compatibility validator требует отдельно одобренное evidence для точной комбинации, а не общее описание модели или названия.
+- Новых HTTP routes и PostgreSQL migrations нет. Поддержка Geely не заявлена; неизвестная конфигурация возвращает `unknown`.
+
 ## 2026-11-01 — CARVION Simulator
 
 - Добавлен `internal/simulator` как единственный каталог явно демонстрационных profiles и Android XML fixtures; фикстуры не содержат реальных vehicle/firmware данных и не заявляют Geely support.

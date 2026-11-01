@@ -17,15 +17,19 @@
 {"jsonrpc":"2.0","id":"1","method":"GetInfo","params":{}}
 ```
 
-Успех:
+Успех (manifest v2, текущая версия SDK):
 
 ```json
-{"jsonrpc":"2.0","id":"1","result":{"manifest_version":2,"api_version":"v1","sdk_version":"1.0.0","id":"adapter-example","name":"Example Adapter","version":"1.0.0","executable":"bin/adapter-example","capabilities":{"detect":true,"check_compatibility":true,"inspect_resources":false},"input_types":["vehicle-observation-json","compatibility-profile"],"resource_formats":[]}}
+{"jsonrpc":"2.0","id":"1","result":{"manifest_version":2,"api_version":"v1","sdk_version":"1.1.0","id":"adapter-example","name":"Example Adapter","version":"1.0.0","executable":"bin/adapter-example","capabilities":{"detect":true,"check_compatibility":true,"inspect_resources":false},"input_types":["vehicle-observation-json","compatibility-profile"],"resource_formats":[]}}
 ```
 
 Ошибка использует стандартный `error` объект JSON-RPC с `code` и `message`. Неизвестные поля, неверный JSON-RPC version/request ID, отсутствующий `result`, лишние frames или некорректная форма результата считаются ошибкой процесса.
 
 Поддерживаемые методы: `GetInfo`, `Detect`, `CheckCompatibility`, `InspectResources`. Request/result shapes определены JSON tags в `pkg/adaptersdk/v1/types.go` и `rpc.go`.
+
+## SDK 1.1 compatibility extension
+
+`CheckCompatibility` может дополнительно получить `vehicle_profile` как произвольный JSON object, если поле объявлено Core сценария и адаптер описывает тип входа `vehicle-research-profile-json`. Для Geely Research это строгая схема `carvion.geely-research/v1`; обычные compatibility requests не содержат это поле. Оно передаётся в том же ограниченном RPC frame и не открывает адаптеру самостоятельный доступ к файлам, сети или устройствам.
 
 ## I/O и лимиты
 

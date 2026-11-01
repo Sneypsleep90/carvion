@@ -1,0 +1,24 @@
+{
+  "manifest_version": 2,
+  "api_version": "v1",
+  "sdk_version": "1.1.0",
+  "id": "adapter-geely-research",
+  "name": "CARVION Geely Research Adapter",
+  "version": "0.1.0",
+  "executable": "bin/adapter-geely-research",
+  "capabilities": {
+    "detect": true,
+    "check_compatibility": true,
+    "inspect_resources": true
+  },
+  "input_types": [
+    "vehicle-observation-json",
+    "compatibility-profile",
+    "vehicle-research-profile-json",
+    "resource-document"
+  ],
+  "resource_formats": [
+    "android-strings-xml",
+    "carvion-json-v1"
+  ]
+}

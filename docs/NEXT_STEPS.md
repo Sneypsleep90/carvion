@@ -1,27 +1,28 @@
-# Ближайшие задачи: Step 6 — Geely Research Adapter
+# Ближайшие задачи
 
-Step 5 CARVION Simulator завершён для локальных демонстрационных данных. Он проходит synthetic профили через JSON-RPC demo adapter, Go Core и Localization Engine; подробности и подтверждённые проверки — в [simulator/OVERVIEW.md](simulator/OVERVIEW.md) и [simulator/TEST_RESULTS.md](simulator/TEST_RESULTS.md). Полный порядок этапов — в [ROADMAP.md](ROADMAP.md).
+Step 6 добавил Geely Research Mode для выбранных локальных файлов. Это исследовательский каркас; точные конфигурации Xingyue L / Monjaro 2022–2024 неизвестны, Geely support не заявлен. См. [исследовательские документы](research/geely/OVERVIEW.md) и [общий порядок этапов](ROADMAP.md).
 
-## Следующий этап
+## Следующий этап — Step 7: Deployment Engine (пока только проектирование)
 
-1. Составить исследовательский план и перечень допустимых первичных источников по выбранной платформе.
-2. Установить точные platform IDs, hardware revisions и firmware build identifiers только по подтверждённым данным.
-3. Зафиксировать provenance, ограничения лицензий/доступа и неизвестные поля в `docs/research/`.
-4. Не заявлять Geely support, пока идентификаторы и compatibility rules не подтверждены и не проверены.
-5. Реализовывать Research Adapter только после фиксации evidence и безопасной read-only границы; неизвестные случаи должны оставаться `unknown`.
+1. Согласовать разрешённый scope операций и подтвердить применимые официальные процедуры/источники до реализации.
+2. Спроектировать проверку целостности, provenance, явное подтверждение пользователя, cancellation и безопасный отказ.
+3. Разделить package validation и подтверждение реального результата; локальный тест не должен изображаться подтверждением на автомобиле.
+4. Если нет проверенной и разрешённой процедуры для конкретной конфигурации, deployment должен оставаться выключенным/неизвестным.
+5. Не реализовывать обход защиты, несанкционированную запись или неподтверждённую установку.
 
-## Уже доступно в Desktop
+## Доступно сейчас
 
-- Состояние Go Core, локальной PostgreSQL и адаптеров; каталог и synthetic compatibility checks.
-- Экран Adapters с версиями, capabilities и статусом.
-- Localization projects: импорт Android XML/JSON, поиск и правка русских переводов, утверждение, повторный review после изменения источника, validation, CSV/resource export и package download.
-- Simulator с демонстрационными профилями, compatibility exits, JSON-RPC ошибкой, отменой и проверкой скачиваемого CARVION ZIP.
-- Desktop вызывает Go Core через Wails, не через HTTP.
+- CARVION Studio напрямую вызывает Go Core через Wails bindings.
+- Adapters показывает локальные процессы; `adapter-android-demo` и `adapter-geely-research` работают через JSON-RPC.
+- Simulator проходит synthetic сценарии без настоящего автомобиля.
+- Localization импортирует Android XML и versioned JSON, редактирует/проверяет русский перевод и строит CARVION language package.
+- Geely Research Mode принимает JSON-профиль и отдельный XML/JSON ресурс, показывает публичные источники с scope, классифицирует без точного правила как `unknown`, импортирует ресурс по явному действию и экспортирует отчёт без local path/raw resource content.
 
-## Оставшиеся продуктовые задачи
+## Оставшиеся ограничения
 
-- Desktop runtime требует локальный `DATABASE_URL`; Hub-backed mode/auth и способ поставки PostgreSQL не решены.
-- Android XML inline markup и CDATA внутри переводимой строки отклоняются; детали в [localization/FORMATS.md](localization/FORMATS.md).
-- Language Packages и Operation History как отдельные экраны остаются placeholders.
-- Simulator использует только встроенные synthetic fixtures, статические русские тестовые переводы и session-only event log; native Wails UI не покрыт автоматическим UI-тестом.
-- Adapter process не является OS sandbox; signing/notarization, remote registry и real-car workflows не реализованы.
+- Geely hardware revisions и firmware build IDs для целевых лет не подтверждены; exact catalog пуст.
+- PostgreSQL integration test нового Geely import требует отдельный `CARVION_TEST_DATABASE_URL` и в текущем запуске не выполнялся.
+- Desktop dev режим требует локальную PostgreSQL; Hub repository и Hub auth не реализованы.
+- Android XML nested inline markup/CDATA пока отклоняется.
+- Language Packages и Operation History остаются отдельными placeholder экранами.
+- OS sandbox, plugin signing, native UI automation, macOS notarization и distribution update ещё не реализованы.

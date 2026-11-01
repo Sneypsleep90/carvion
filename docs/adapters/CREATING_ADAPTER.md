@@ -4,7 +4,7 @@
 
 1. Создайте Go module или command, импортирующий `github.com/Sneypsleep90/carvion/pkg/adaptersdk/v1`.
 2. Реализуйте интерфейс `sdk.Adapter`.
-3. Верните из `GetInfo` manifest schema v2 с теми же значениями, что в установленном `manifest.json`.
+3. Верните из `GetInfo` manifest schema v2 с теми же значениями, что в установленном `manifest.json`; текущая SDK package version — `1.1.0`, API version — `v1`.
 4. Запустите `sdk.Serve(ctx, os.Stdin, os.Stdout, adapter)` в `main`; логи пишите только через stderr.
 5. Соберите executable внутрь каталога адаптера и укажите относительный путь в manifest.
 6. Укажите только действительно реализованные capabilities, входные типы и форматы.
@@ -15,7 +15,7 @@
 ## Локальная проверка
 
 ```sh
-go test ./pkg/adaptersdk/v1 ./internal/pluginmanager ./internal/adapters/androiddemo
+go test ./pkg/adaptersdk/v1 ./internal/pluginmanager ./internal/adapters/androiddemo ./internal/adapters/geelyresearch
 make build-adapter
 make desktop-dev
 ```

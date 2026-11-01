@@ -18,14 +18,15 @@ application.Service
   ├── domain types and errors
   ├── CatalogRepository port ── local PostgreSQL implementation
   └── AdapterGateway port ── SDK/Plugin Manager bridge
-                                  └── JSON-RPC process → adapter-android-demo
+                                  ├── JSON-RPC process → adapter-android-demo
+                                  └── JSON-RPC process → adapter-geely-research
 
 desktop/main.go (Wails 3)
   ├── embedded React bundle
   └── ApplicationService bindings → application.Service directly
 ```
 
-`internal/core/domain` содержит transport-neutral типы и ошибки; `internal/core/application` содержит use cases, в том числе simulator orchestration, и порты; `internal/core/infrastructure` реализует PostgreSQL repositories и переводит контракты SDK/Manager в Core domain. Localization parsers, validator, exporters и package builder расположены в `internal/localization`; общий каталог синтетических профилей и Android XML fixture — в `internal/simulator`. Эти пакеты не зависят от HTTP, Wails или PostgreSQL. `internal/composition.NewLocal` создаёт pool, repositories, локальный adapter manager и application service и владеет закрытием PostgreSQL pool. API запускает этот Core в процессе, HTTP handlers вызывают его напрямую.
+`internal/core/domain` содержит transport-neutral типы и ошибки; `internal/core/application` содержит use cases, в том числе simulator и Geely research orchestration, и порты; `internal/core/infrastructure` реализует PostgreSQL repositories и переводит контракты SDK/Manager в Core domain. Localization parsers, validator, exporters и package builder расположены в `internal/localization`; общий каталог синтетических профилей и Android XML fixture — в `internal/simulator`; versioned Geely profile/evidence/exact matcher/report — в `internal/geelyresearch`. Эти пакеты не зависят от HTTP или Wails. `internal/composition.NewLocal` создаёт pool, repositories, локальный adapter manager и application service и владеет закрытием PostgreSQL pool. API запускает этот Core в процессе, HTTP handlers вызывают его напрямую.
 
 Wails service facade в `desktop/` вызывает `application.Service` напрямую. `cmd/carvion-api` остаётся отдельной точкой входа; Desktop не вызывает локальный HTTP API.
 
@@ -33,17 +34,19 @@ Wails service facade в `desktop/` вызывает `application.Service` нап
 
 | Путь | Назначение / наблюдение |
 |---|---|
-| `cmd/` | Две root module entry points: API и synthetic adapter process; Wails app находится в `desktop/` module |
+| `cmd/` | Точки входа root module: API, Android demo adapter и Geely research adapter; Wails app находится в `desktop/` module |
 | `desktop/` | Wails Desktop entry point, Go binding facade, lifecycle и отдельный Wails Go module |
 | `desktop/frontend/` | React/TypeScript интерфейс, Wails-generated bindings, UI primitives и Playwright E2E |
 | `pkg/adaptersdk/v1/` | Публичный Go contract и JSON-RPC server |
+| `internal/geelyresearch/` | Versioned profile schema, публичные evidence, пустой exact compatibility catalog и очищенный report |
+| `internal/adapters/geelyresearch/` | Исследовательский adapter process; shared XML/JSON localization parser |
 | `internal/core/domain/` | Domain types и ошибки |
 | `internal/core/application/` | Application service, simulator orchestration и порты `AdapterGateway` / `CatalogRepository` |
 | `internal/core/infrastructure/` | PostgreSQL catalog repository и adapter bridge к SDK/Manager |
 | `internal/composition/` | Создание local runtime и lifecycle PostgreSQL pool |
 | `internal/simulator/` | Embedded synthetic profile catalog и Android XML fixture, общие для Core и demo adapter |
 | `internal/` | Также config, DB pool, HTTP transport, Plugin Manager, demo adapter и тесты |
-| `adapters/` | Demo `manifest.json`; `bin/` содержит generated executable после build |
+| `adapters/` | Manifests Android demo и Geely research; `bin/` содержит generated executables после build |
 | `db/migrations/` | Три Goose migrations, включая проекты и данные Localization Engine |
 | `docs/` | Существующие заметки SDK/архитектуры и новая проектная документация |
 | `.github/workflows/ci.yml` | Go format check, vet, unit tests и build |
@@ -89,18 +92,22 @@ internal/composition.NewLocal → application.Service
   ├── LocalizationRepository → local PostgreSQL (development)
   ├── internal/localization → XML/JSON/CSV/validation/ZIP
   ├── internal/simulator → whitelisted synthetic profiles/resources
-  └── AdapterGateway → Plugin Manager → JSON-RPC subprocess
+  ├── Geely research use cases → adapterbridge → Plugin Manager → Geely JSON-RPC subprocess
+  └── AdapterGateway → Plugin Manager → demo JSON-RPC subprocess
 
 cmd/carvion-api → HTTP handlers → same Core (separate Hub/API transport)
 ```
 
 Wails bindings и HTTP handlers вызывают application services; Core не вызывается через локальный REST endpoint. Для разработки composition использует PostgreSQL. Application зависит от repository ports, поэтому Hub-backed implementation можно подключить без изменения use cases и без DB credentials в UI. Remote implementation и авторизация Hub ещё не реализованы. Plugin Manager остаётся границей Core и adapter processes.
 
+Geely Research Mode использует специальный Core use case с фиксированным `adapter-geely-research` ID и дополнительным `vehicle_profile` SDK request. Профиль и результаты не сохраняются как отдельные записи; resource file попадает в Localization Engine только по действию пользователя. Report builder выводит hash/key metadata без local path и raw resource contents. Для этого процесса не добавлялись HTTP routes или DB migrations.
+
 ## Архитектурные пробелы
 
 - Android XML parser отклоняет inline nested markup и CDATA внутри переводимых строк; JSON поддерживает только схему `carvion.localization/v1`.
 - Localization workflow создаёт, редактирует, проверяет и экспортирует проекты; отдельный Language Packages screen и Operation History остаются placeholders.
 - Simulator вызывается прямо через Wails/Core. Core выбирает доступный адаптер по capabilities, останавливает workflow при `unknown`/`unsupported` и при `supported` строит проверенный CARVION ZIP. Synthetic fixtures встроены; автомобиль не подключается. Run events существуют только в текущем результате, а project/package persistence использует Localization repository.
+- Geely Research Adapter читает только выбранные пользователем файлы через RPC. Пустой exact-match catalog оставляет совместимость `unknown`; подтверждённых Geely конфигураций/build IDs для Xingyue L/Monjaro 2022–2024 нет, support не заявлен. Evidence и ограничения собраны в `docs/research/geely/`.
 - Отдельных HTTP routes, migrations и direct database доступа адаптера для Simulator нет. Реальный JSON-RPC boundary проверяется отдельно от Playwright UI E2E backend.
 - Desktop startup требует `DATABASE_URL` и PostgreSQL. Production Desktop storage / Hub auth не реализованы.
 - `CatalogRepository` остаётся read-only и читает три исходные catalog tables. `LocalizationRepository` поддерживает транзакционную запись localization projects/resources/translations, append-only history, validation runs и package artifacts. Repositories/use cases для adapter definitions, versions, hardware variants, firmware builds и compatibility rules пока отсутствуют.

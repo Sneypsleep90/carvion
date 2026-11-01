@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "api_version": "v1",
-  "sdk_version": "1.0.0",
+  "sdk_version": "1.1.0",
   "id": "adapter-android-demo",
   "name": "CARVION Synthetic Android Demo",
   "version": "0.1.0",

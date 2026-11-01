@@ -18,9 +18,9 @@ const sampleXML = `<?xml version="1.0" encoding="utf-8"?>
   <string name="internal_route" translatable="false">synthetic-route</string>
 </resources>`;
 
-type LocalizationPageProps = Readonly<{ backend: DesktopBackend }>;
+type LocalizationPageProps = Readonly<{ backend: DesktopBackend; initialProjectID: string | null; onInitialProjectLoaded: () => void }>;
 
-export function LocalizationPage({ backend }: LocalizationPageProps) {
+export function LocalizationPage({ backend, initialProjectID, onInitialProjectLoaded }: LocalizationPageProps) {
   const [projects, setProjects] = useState<ReadonlyArray<LocalizationProjectSummary>>([]);
   const [project, setProject] = useState<LocalizationProject | null>(null);
   const [name, setName] = useState("Новый проект локализации");
@@ -44,6 +44,16 @@ export function LocalizationPage({ backend }: LocalizationPageProps) {
     // Project listing is a one-time load; updates are refreshed after mutations.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!initialProjectID) return;
+    void backend.getLocalizationProject(initialProjectID).then((loaded) => {
+      setLoadedProject(loaded);
+      setError(null);
+    }).catch((cause: unknown) => {
+      setError(errorMessage(cause));
+    }).finally(onInitialProjectLoaded);
+  }, [backend, initialProjectID, onInitialProjectLoaded]);
 
   const translations = useMemo(() => new Map((project?.translations ?? []).map((item) => [item.resourceKey, item])), [project]);
   const hasUnsavedChanges = useMemo(() => (project?.resources ?? []).some((resource) =>

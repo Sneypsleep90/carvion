@@ -25,3 +25,12 @@ export function downloadBase64(filename: string, encoded: string, contentType: s
   anchor.click();
   URL.revokeObjectURL(url);
 }
+
+export function downloadText(filename: string, content: string, contentType: string) {
+  const url = URL.createObjectURL(new Blob([content], { type: contentType }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}

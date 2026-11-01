@@ -2,7 +2,9 @@ package adapterbridge
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/Sneypsleep90/carvion/internal/core/domain"
@@ -20,6 +22,31 @@ type managerStub struct {
 	gotContext context.Context
 	gotID      string
 	gotRequest any
+}
+
+func TestGatewayPassesOptionalVehicleResearchProfileWithoutChangingOtherFields(t *testing.T) {
+	manager := &managerStub{result: sdk.CompatibilityResult{Status: sdk.StatusUnknown, Reason: "no exact record"}}
+	gateway := New(manager)
+	profile := json.RawMessage(`{"schema":"carvion.geely-research/v1","profile_id":"test-only"}`)
+	request := domain.CompatibilityRequest{
+		Identity: domain.VehicleIdentity{Manufacturer: "TEST ONLY", Model: "TEST ONLY", PlatformID: "TEST ONLY"},
+		Hardware: domain.HardwareInfo{PlatformID: "TEST ONLY", Revision: "TEST ONLY"},
+		Firmware: domain.FirmwareInfo{BuildID: "TEST ONLY", Version: "TEST ONLY"},
+	}
+
+	got, err := gateway.CheckCompatibilityWithVehicleProfile(context.Background(), "adapter-geely-research", request, profile)
+	if err != nil || got.Status != domain.StatusUnknown {
+		t.Fatalf("CheckCompatibilityWithVehicleProfile() = %+v, %v", got, err)
+	}
+	want := sdk.CompatibilityRequest{
+		Identity:       sdk.VehicleIdentity{Manufacturer: "TEST ONLY", Model: "TEST ONLY", PlatformID: "TEST ONLY"},
+		Hardware:       sdk.HardwareInfo{PlatformID: "TEST ONLY", Revision: "TEST ONLY"},
+		Firmware:       sdk.FirmwareInfo{BuildID: "TEST ONLY", Version: "TEST ONLY"},
+		VehicleProfile: profile,
+	}
+	if got := manager.gotRequest.(sdk.CompatibilityRequest); !reflect.DeepEqual(got, want) {
+		t.Fatalf("manager request = %+v, want %+v", got, want)
+	}
 }
 
 func (s *managerStub) List() []pluginmanager.AdapterSummary { return s.items }
@@ -68,7 +95,7 @@ func TestGatewayMapsAdapterListAndCompatibilityResults(t *testing.T) {
 		t.Fatalf("CheckCompatibility() = %+v, %v", got, err)
 	}
 	wantRequest := sdk.CompatibilityRequest{Firmware: sdk.FirmwareInfo{BuildID: "build-x", Version: "1.0"}}
-	if manager.gotContext != ctx || manager.gotID != "adapter-demo" || manager.gotRequest != wantRequest {
+	if manager.gotContext != ctx || manager.gotID != "adapter-demo" || !reflect.DeepEqual(manager.gotRequest, wantRequest) {
 		t.Fatalf("manager received context=%v id=%q request=%+v", manager.gotContext, manager.gotID, manager.gotRequest)
 	}
 }

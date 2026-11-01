@@ -13,7 +13,7 @@ import (
 
 const (
 	APIVersion      = "v1"
-	SDKVersion      = "1.0.0"
+	SDKVersion      = "1.1.0"
 	SDKMajorVersion = 1
 	ManifestVersion = 2
 )
@@ -21,9 +21,10 @@ const (
 type AdapterInputType string
 
 const (
-	InputVehicleObservationJSON AdapterInputType = "vehicle-observation-json"
-	InputCompatibilityProfile   AdapterInputType = "compatibility-profile"
-	InputResourceDocument       AdapterInputType = "resource-document"
+	InputVehicleObservationJSON     AdapterInputType = "vehicle-observation-json"
+	InputCompatibilityProfile       AdapterInputType = "compatibility-profile"
+	InputVehicleResearchProfileJSON AdapterInputType = "vehicle-research-profile-json"
+	InputResourceDocument           AdapterInputType = "resource-document"
 )
 
 var (
@@ -98,7 +99,7 @@ func ValidateManifest(manifest AdapterManifest) error {
 			return fmt.Errorf("duplicate adapter input type %q", inputType)
 		}
 		switch inputType {
-		case InputVehicleObservationJSON, InputCompatibilityProfile, InputResourceDocument:
+		case InputVehicleObservationJSON, InputCompatibilityProfile, InputVehicleResearchProfileJSON, InputResourceDocument:
 			inputTypes[inputType] = struct{}{}
 		default:
 			return fmt.Errorf("unsupported adapter input type %q", inputType)
@@ -118,6 +119,9 @@ func ValidateManifest(manifest AdapterManifest) error {
 	}
 	if !manifest.Capabilities.CheckCompatibility && hasInputType(inputTypes, InputCompatibilityProfile) {
 		return errors.New("compatibility profile input type requires CheckCompatibility capability")
+	}
+	if hasInputType(inputTypes, InputVehicleResearchProfileJSON) && !manifest.Capabilities.CheckCompatibility {
+		return errors.New("vehicle research profile input type requires CheckCompatibility capability")
 	}
 	if !manifest.Capabilities.InspectResources && (hasInputType(inputTypes, InputResourceDocument) || len(manifest.ResourceFormats) > 0) {
 		return errors.New("resource input types and formats require InspectResources capability")
@@ -167,9 +171,10 @@ type HardwareInfo struct {
 }
 
 type CompatibilityRequest struct {
-	Identity VehicleIdentity `json:"identity"`
-	Hardware HardwareInfo    `json:"hardware"`
-	Firmware FirmwareInfo    `json:"firmware"`
+	Identity       VehicleIdentity `json:"identity"`
+	Hardware       HardwareInfo    `json:"hardware"`
+	Firmware       FirmwareInfo    `json:"firmware"`
+	VehicleProfile json.RawMessage `json:"vehicle_profile,omitempty"`
 }
 
 type CompatibilityResult struct {

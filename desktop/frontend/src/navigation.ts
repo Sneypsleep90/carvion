@@ -8,6 +8,7 @@ import {
   ScanLine,
   Waypoints,
   Settings2,
+  SearchCode,
   type LucideIcon,
 } from "lucide-react";
 
@@ -18,6 +19,7 @@ export type SectionId =
   | "localization"
   | "language-packages"
   | "adapters"
+  | "geely-research"
   | "simulator"
   | "history"
   | "settings";
@@ -40,6 +42,7 @@ export const navigationGroups: ReadonlyArray<Readonly<{ label: string; items: Re
     label: "СИСТЕМА",
     items: [
       { id: "adapters", label: "Адаптеры", icon: PlugZap },
+      { id: "geely-research", label: "Исследование Geely", icon: SearchCode },
       { id: "history", label: "История операций", icon: Clock3 },
       { id: "settings", label: "Настройки", icon: Settings2 },
     ],
@@ -53,6 +56,7 @@ export const sectionTitles: Readonly<Record<SectionId, string>> = {
   localization: "Локализация",
   "language-packages": "Языковые пакеты",
   adapters: "Адаптеры",
+  "geely-research": "Исследование Geely",
   simulator: "Симулятор",
   history: "История операций",
   settings: "Настройки",
@@ -65,6 +69,7 @@ export const sectionDescription: Readonly<Record<SectionId, string>> = {
   localization: "Чтение переводимых строк из тестового Android XML.",
   "language-packages": "Подготовка к будущему workflow локализации.",
   adapters: "Доверенные локальные процессы, обнаруженные Go Core.",
+  "geely-research": "Импорт локальных профилей и ресурсов; неизвестные конфигурации остаются unknown.",
   simulator: "Полный тестовый цикл CARVION без подключения к автомобилю.",
   history: "Журнал операций появится вместе с workflow проекта.",
   settings: "Сведения о текущем локальном запуске.",

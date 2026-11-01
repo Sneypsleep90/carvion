@@ -2,6 +2,7 @@ package adapterbridge
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -72,10 +73,21 @@ func (g *Gateway) Detect(ctx context.Context, adapterID string, request domain.D
 }
 
 func (g *Gateway) CheckCompatibility(ctx context.Context, adapterID string, request domain.CompatibilityRequest) (domain.CompatibilityResult, error) {
+	return g.checkCompatibility(ctx, adapterID, request, nil)
+}
+
+// CheckCompatibilityWithVehicleProfile passes an optional versioned research
+// profile through the additive SDK v1.1 request field.
+func (g *Gateway) CheckCompatibilityWithVehicleProfile(ctx context.Context, adapterID string, request domain.CompatibilityRequest, profile json.RawMessage) (domain.CompatibilityResult, error) {
+	return g.checkCompatibility(ctx, adapterID, request, profile)
+}
+
+func (g *Gateway) checkCompatibility(ctx context.Context, adapterID string, request domain.CompatibilityRequest, profile json.RawMessage) (domain.CompatibilityResult, error) {
 	result, err := g.manager.CheckCompatibility(ctx, adapterID, sdk.CompatibilityRequest{
-		Identity: sdk.VehicleIdentity{Manufacturer: request.Identity.Manufacturer, Model: request.Identity.Model, PlatformID: request.Identity.PlatformID},
-		Hardware: sdk.HardwareInfo{PlatformID: request.Hardware.PlatformID, Revision: request.Hardware.Revision},
-		Firmware: sdk.FirmwareInfo{BuildID: request.Firmware.BuildID, Version: request.Firmware.Version},
+		Identity:       sdk.VehicleIdentity{Manufacturer: request.Identity.Manufacturer, Model: request.Identity.Model, PlatformID: request.Identity.PlatformID},
+		Hardware:       sdk.HardwareInfo{PlatformID: request.Hardware.PlatformID, Revision: request.Hardware.Revision},
+		Firmware:       sdk.FirmwareInfo{BuildID: request.Firmware.BuildID, Version: request.Firmware.Version},
+		VehicleProfile: append(json.RawMessage(nil), profile...),
 	})
 	if err != nil {
 		return domain.CompatibilityResult{}, mapManagerError(err)

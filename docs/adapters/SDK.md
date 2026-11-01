@@ -2,7 +2,7 @@
 
 ## Версии
 
-Импортируйте `github.com/Sneypsleep90/carvion/pkg/adaptersdk/v1`. Текущий контракт объявляет `api_version: "v1"`, `sdk_version: "1.0.0"` и `manifest_version: 2`. Менеджер принимает только API v1 и SDK major version 1. Несовместимые или некорректные manifests не регистрируются.
+Импортируйте `github.com/Sneypsleep90/carvion/pkg/adaptersdk/v1`. Текущий контракт объявляет `api_version: "v1"`, SDK package version `1.1.0` и `manifest_version: 2`. Менеджер принимает API v1 и SDK major version 1; установленный manifest сохраняет свою минорную версию. Несовместимые или некорректные manifests не регистрируются.
 
 Manifest хранится в `manifest.json` рядом с исполняемым файлом:
 
@@ -10,7 +10,7 @@ Manifest хранится в `manifest.json` рядом с исполняемы�
 {
   "manifest_version": 2,
   "api_version": "v1",
-  "sdk_version": "1.0.0",
+  "sdk_version": "1.1.0",
   "id": "adapter-example",
   "name": "Example Adapter",
   "version": "1.0.0",
@@ -30,7 +30,7 @@ Manifest хранится в `manifest.json` рядом с исполняемы�
 | Capability | Требуемый input type |
 |---|---|
 | `detect` | `vehicle-observation-json` |
-| `check_compatibility` | `compatibility-profile` |
+| `check_compatibility` | `compatibility-profile`; для дополнительного версионированного профиля можно также объявить `vehicle-research-profile-json` |
 | `inspect_resources` | `resource-document` и не менее одного формата |
 
 Формат ресурса задаётся стабильным slug, например `android-strings-xml`. Менеджер проверяет поля, типы, SemVer, дубликаты, соответствие capabilities и входов, а также совпадение `GetInfo` с файлом manifest.
@@ -45,6 +45,8 @@ Manifest хранится в `manifest.json` рядом с исполняемы�
 - `InspectResources` — прочитать содержимое поддерживаемого документа.
 
 Результаты определения и совместимости имеют строгое состояние: `supported`, `unsupported` или `unknown`. Используйте `unknown`, если точного подтверждения нет. Нельзя выводить поддержку из одного совпадения марки, имени или версии.
+
+Начиная с SDK `1.1.0`, `CompatibilityRequest` поддерживает необязательное `vehicle_profile` типа `json.RawMessage`. Оно позволяет передавать дополнительное versioned JSON наблюдение, например `carvion.geely-research/v1`, когда базовых `VehicleIdentity`/`HardwareInfo`/`FirmwareInfo` недостаточно для полного tuple. Старые запросы сохраняют прежнюю JSON форму: поле отсутствует, если не задано. API major остаётся `v1`; не используйте это поле для секретов или непроверенных заявлений поддержки.
 
 Метаданные manifest доступны ядру и экрану Adapters: adapter ID/version, SDK/API version, capabilities, input types, resource formats и последний runtime status (`available`/`unavailable`). Runtime status — результат последнего процесса, не фоновый health check.
 

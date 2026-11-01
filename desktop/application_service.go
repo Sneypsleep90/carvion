@@ -60,6 +60,14 @@ type simulatorCore interface {
 	RunSimulatorScenario(context.Context, string) (domain.SimulatorRunResult, error)
 }
 
+type geelyResearchCore interface {
+	ListGeelyResearchEvidence(context.Context) ([]domain.GeelyResearchEvidence, error)
+	AnalyzeGeelyProfile(context.Context, []byte) (domain.GeelyResearchAnalysis, error)
+	InspectGeelyResources(context.Context, domain.GeelyResourceRequest) (domain.ResourceInspection, error)
+	ImportGeelyLocalizationProject(context.Context, domain.GeelyLocalizationImportRequest) (domain.GeelyLocalizationImportResult, error)
+	BuildGeelyDiagnosticReport(context.Context, domain.GeelyDiagnosticReportRequest) (domain.GeelyDiagnosticReport, error)
+}
+
 type managedRuntime interface {
 	Ping(context.Context) error
 	Close()
@@ -421,6 +429,46 @@ func (s *ApplicationService) CancelSimulatorScenario(requestID string) bool {
 	return true
 }
 
+func (s *ApplicationService) ListGeelyResearchEvidence() ([]domain.GeelyResearchEvidence, error) {
+	ctx, core, err := s.geelyResearchCoreSnapshot()
+	if err != nil {
+		return nil, err
+	}
+	return core.ListGeelyResearchEvidence(ctx)
+}
+
+func (s *ApplicationService) AnalyzeGeelyProfile(profileJSON string) (domain.GeelyResearchAnalysis, error) {
+	ctx, core, err := s.geelyResearchCoreSnapshot()
+	if err != nil {
+		return domain.GeelyResearchAnalysis{}, err
+	}
+	return core.AnalyzeGeelyProfile(ctx, []byte(profileJSON))
+}
+
+func (s *ApplicationService) InspectGeelyResources(request domain.GeelyResourceRequest) (domain.ResourceInspection, error) {
+	ctx, core, err := s.geelyResearchCoreSnapshot()
+	if err != nil {
+		return domain.ResourceInspection{}, err
+	}
+	return core.InspectGeelyResources(ctx, request)
+}
+
+func (s *ApplicationService) ImportGeelyLocalizationProject(request domain.GeelyLocalizationImportRequest) (domain.GeelyLocalizationImportResult, error) {
+	ctx, core, err := s.geelyResearchCoreSnapshot()
+	if err != nil {
+		return domain.GeelyLocalizationImportResult{}, err
+	}
+	return core.ImportGeelyLocalizationProject(ctx, request)
+}
+
+func (s *ApplicationService) BuildGeelyDiagnosticReport(request domain.GeelyDiagnosticReportRequest) (domain.GeelyDiagnosticReport, error) {
+	ctx, core, err := s.geelyResearchCoreSnapshot()
+	if err != nil {
+		return domain.GeelyDiagnosticReport{}, err
+	}
+	return core.BuildGeelyDiagnosticReport(ctx, request)
+}
+
 func (s *ApplicationService) coreSnapshot() (context.Context, coreService, error) {
 	ctx, core, _, startupError := s.snapshot()
 	if err := ctx.Err(); err != nil {
@@ -458,6 +506,18 @@ func (s *ApplicationService) simulatorCoreSnapshot() (context.Context, simulator
 		return nil, nil, fmt.Errorf("%w: simulator service is unavailable", ErrCoreUnavailable)
 	}
 	return ctx, simulator, nil
+}
+
+func (s *ApplicationService) geelyResearchCoreSnapshot() (context.Context, geelyResearchCore, error) {
+	ctx, core, err := s.coreSnapshot()
+	if err != nil {
+		return nil, nil, err
+	}
+	research, ok := core.(geelyResearchCore)
+	if !ok {
+		return nil, nil, fmt.Errorf("%w: Geely research service is unavailable", ErrCoreUnavailable)
+	}
+	return ctx, research, nil
 }
 
 func (s *ApplicationService) snapshot() (context.Context, coreService, managedRuntime, string) {

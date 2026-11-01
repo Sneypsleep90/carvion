@@ -169,6 +169,55 @@ func TestSimulatorMethodsReportUnavailableCore(t *testing.T) {
 	}
 }
 
+func TestGeelyResearchMethodsDelegateDirectlyToCoreWithWailsContext(t *testing.T) {
+	wailsContext := context.WithValue(context.Background(), geelyContextKey{}, "wails-context")
+	core := &geelyResearchCoreSpy{coreSpy: &coreSpy{}}
+	service := &ApplicationService{
+		loadConfig: func() (config.Config, error) { return config.Config{}, nil },
+		startRuntime: func(context.Context, config.Config, *slog.Logger) (coreService, managedRuntime, error) {
+			return core, &runtimeSpy{}, nil
+		},
+	}
+	if err := service.ServiceStartup(wailsContext, wailsapp.ServiceOptions{}); err != nil {
+		t.Fatal(err)
+	}
+
+	evidence, err := service.ListGeelyResearchEvidence()
+	if err != nil || len(evidence) != 1 || evidence[0].ID != "evidence-1" {
+		t.Fatalf("ListGeelyResearchEvidence() = %+v, %v", evidence, err)
+	}
+	analysis, err := service.AnalyzeGeelyProfile(`{"schema":"carvion.geely-research/v1"}`)
+	if err != nil || analysis.Compatibility.Status != domain.StatusUnknown {
+		t.Fatalf("AnalyzeGeelyProfile() = %+v, %v", analysis, err)
+	}
+	if core.context == nil || core.context.Value(geelyContextKey{}) != "wails-context" || core.profileJSON == "" {
+		t.Fatalf("Core received context=%v profile=%q", core.context, core.profileJSON)
+	}
+	resource := domain.GeelyResourceRequest{Filename: "strings.xml", Format: domain.LocalizationFormatAndroidXML, Content: "<resources/>"}
+	if _, err := service.InspectGeelyResources(resource); err != nil {
+		t.Fatalf("InspectGeelyResources() error = %v", err)
+	}
+	if _, err := service.ImportGeelyLocalizationProject(domain.GeelyLocalizationImportRequest{}); err != nil {
+		t.Fatalf("ImportGeelyLocalizationProject() error = %v", err)
+	}
+	if _, err := service.BuildGeelyDiagnosticReport(domain.GeelyDiagnosticReportRequest{}); err != nil {
+		t.Fatalf("BuildGeelyDiagnosticReport() error = %v", err)
+	}
+	if core.evidenceCalls != 1 || core.analyzeCalls != 1 || core.inspectCalls != 1 || core.importCalls != 1 || core.reportCalls != 1 {
+		t.Fatalf("Geely Core calls evidence=%d analyze=%d inspect=%d import=%d report=%d", core.evidenceCalls, core.analyzeCalls, core.inspectCalls, core.importCalls, core.reportCalls)
+	}
+}
+
+func TestGeelyResearchMethodsReportUnavailableCore(t *testing.T) {
+	service := &ApplicationService{}
+	if _, err := service.ListGeelyResearchEvidence(); !errors.Is(err, ErrCoreUnavailable) {
+		t.Fatalf("ListGeelyResearchEvidence() error = %v, want ErrCoreUnavailable", err)
+	}
+	if _, err := service.AnalyzeGeelyProfile("{}"); !errors.Is(err, ErrCoreUnavailable) {
+		t.Fatalf("AnalyzeGeelyProfile() error = %v, want ErrCoreUnavailable", err)
+	}
+}
+
 func TestSimulatorCancellationStopsActiveCoreRun(t *testing.T) {
 	core := &simulatorCoreSpy{coreSpy: &coreSpy{}, waitForCancel: true, started: make(chan struct{})}
 	service := &ApplicationService{
@@ -263,6 +312,50 @@ type simulatorCoreSpy struct {
 }
 
 type simulatorContextKey struct{}
+
+type geelyContextKey struct{}
+
+type geelyResearchCoreSpy struct {
+	*coreSpy
+	evidenceCalls int
+	analyzeCalls  int
+	inspectCalls  int
+	importCalls   int
+	reportCalls   int
+	context       context.Context
+	profileJSON   string
+}
+
+func (c *geelyResearchCoreSpy) ListGeelyResearchEvidence(ctx context.Context) ([]domain.GeelyResearchEvidence, error) {
+	c.evidenceCalls++
+	c.context = ctx
+	return []domain.GeelyResearchEvidence{{ID: "evidence-1"}}, nil
+}
+
+func (c *geelyResearchCoreSpy) AnalyzeGeelyProfile(ctx context.Context, profileJSON []byte) (domain.GeelyResearchAnalysis, error) {
+	c.analyzeCalls++
+	c.context = ctx
+	c.profileJSON = string(profileJSON)
+	return domain.GeelyResearchAnalysis{Compatibility: domain.CompatibilityResult{Status: domain.StatusUnknown}}, nil
+}
+
+func (c *geelyResearchCoreSpy) InspectGeelyResources(ctx context.Context, _ domain.GeelyResourceRequest) (domain.ResourceInspection, error) {
+	c.inspectCalls++
+	c.context = ctx
+	return domain.ResourceInspection{}, nil
+}
+
+func (c *geelyResearchCoreSpy) ImportGeelyLocalizationProject(ctx context.Context, _ domain.GeelyLocalizationImportRequest) (domain.GeelyLocalizationImportResult, error) {
+	c.importCalls++
+	c.context = ctx
+	return domain.GeelyLocalizationImportResult{}, nil
+}
+
+func (c *geelyResearchCoreSpy) BuildGeelyDiagnosticReport(ctx context.Context, _ domain.GeelyDiagnosticReportRequest) (domain.GeelyDiagnosticReport, error) {
+	c.reportCalls++
+	c.context = ctx
+	return domain.GeelyDiagnosticReport{}, nil
+}
 
 func (c *simulatorCoreSpy) ListSimulatorProfiles(ctx context.Context) ([]domain.SimulatorProfile, error) {
 	c.profileCalls++

@@ -7,6 +7,7 @@ import { Topbar } from "./components/topbar";
 import { AdaptersPage } from "./features/adapters-page";
 import { DashboardPage } from "./features/dashboard-page";
 import { DiagnosticsPage } from "./features/diagnostics-page";
+import { GeelyResearchPage } from "./features/geely-research-page";
 import { LocalizationPage } from "./features/localization-page";
 import { SimulatorPage } from "./features/simulator-page";
 import { LanguagePackagesPage, OperationHistoryPage, SettingsPage } from "./features/planned-pages";
@@ -22,6 +23,8 @@ export default function App({ backend }: AppProps) {
   const [adapters, setAdapters] = useState<ReadonlyArray<AdapterInfo> | null>(null);
   const [adaptersLoading, setAdaptersLoading] = useState(true);
   const [adaptersError, setAdaptersError] = useState<string | null>(null);
+  const [initialLocalizationProjectID, setInitialLocalizationProjectID] = useState<string | null>(null);
+  const clearInitialLocalizationProject = useCallback(() => setInitialLocalizationProjectID(null), []);
 
   const refresh = useCallback(async () => {
     setStateLoading(true);
@@ -87,11 +90,13 @@ export default function App({ backend }: AppProps) {
       case "diagnostics":
         return <DiagnosticsPage backend={backend} adapters={adapters ?? []} />;
       case "localization":
-        return <LocalizationPage backend={backend} />;
+        return <LocalizationPage backend={backend} initialProjectID={initialLocalizationProjectID} onInitialProjectLoaded={clearInitialLocalizationProject} />;
       case "language-packages":
         return <LanguagePackagesPage onNavigate={setSection} />;
       case "adapters":
         return <AdaptersPage adapters={adapters} loading={adaptersLoading} error={adaptersError} state={applicationState} onRefresh={() => void refreshAdapters()} />;
+      case "geely-research":
+        return <GeelyResearchPage backend={backend} onOpenLocalization={(projectID) => { setInitialLocalizationProjectID(projectID); setSection("localization"); }} />;
       case "simulator":
         return <SimulatorPage backend={backend} />;
       case "history":
