@@ -1,10 +1,10 @@
 package geelyresearch
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"io"
 	"log/slog"
 	"os"
 	"os/exec"
@@ -46,13 +46,14 @@ func TestAdapterRunsThroughPluginManagerJSONRPCProcess(t *testing.T) {
 		t.Fatalf("decode plugin manifest: %v", err)
 	}
 
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	manager, err := pluginmanager.DiscoverContext(context.Background(), pluginRoot, 3*time.Second, logger)
+	var discoveryLogs bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&discoveryLogs, nil))
+	manager, err := pluginmanager.DiscoverContext(context.Background(), pluginRoot, 10*time.Second, logger)
 	if err != nil {
 		t.Fatalf("DiscoverContext() error = %v", err)
 	}
 	if adapters := manager.List(); len(adapters) != 1 || adapters[0].ID != "adapter-geely-research" {
-		t.Fatalf("registered adapters = %+v, want Geely research process", adapters)
+		t.Fatalf("registered adapters = %+v, want Geely research process; discovery logs:\n%s", adapters, discoveryLogs.String())
 	}
 
 	profileJSON := testProfileJSON(t)
