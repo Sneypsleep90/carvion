@@ -12,4 +12,7 @@ var (
 	ErrCatalogUnavailable          = errors.New("catalog is unavailable")
 	ErrLocalizationProjectNotFound = errors.New("localization project not found")
 	ErrLocalizationUnavailable     = errors.New("localization storage is unavailable")
+	ErrDeploymentJobNotFound       = errors.New("deployment job not found")
+	ErrDeploymentStateConflict     = errors.New("deployment job state conflict")
+	ErrDeploymentUnavailable       = errors.New("deployment storage is unavailable")
 )

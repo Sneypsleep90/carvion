@@ -75,22 +75,24 @@ func VerifyLanguagePackage(artifact []byte, expectedSHA256 string) (VerifiedPack
 
 **Файлы:** создать `db/migrations/00004_deployment_engine.sql`, `internal/core/infrastructure/postgres/deployment_repository.go`, integration tests в `internal/core/infrastructure/postgres/deployment_repository_integration_test.go`.
 
-- [ ] **Step 1: Написать integration tests** под `//go:build integration` для создания job, строгого порядка events, append-only constraint, atomic transition/event persistence, blocked production job и повторного чтения после открытия нового repository.
-- [ ] **Step 2: Создать migration**: `deployment_jobs` с FK на `localization_projects ON DELETE RESTRICT`, package SHA-256, `test|production` mode, target profile/provider IDs nullable, constrained state/result и timestamps; `deployment_job_events` с `(job_id, sequence)` PK, FK `ON DELETE RESTRICT`, status/stage/message/time; индексы на job `created_at DESC` и event `job_id, sequence`; trigger запрещает UPDATE/DELETE events.
-- [ ] **Step 3: Добавить interface и repository**:
+- [x] **Step 1: Написать integration tests** под `//go:build integration` для создания job, строгого порядка events, append-only constraint, atomic transition/event persistence, blocked production job и повторного чтения после открытия нового repository.
+- [x] **Step 2: Создать migration**: `deployment_jobs` с FK на `localization_projects ON DELETE RESTRICT`, package SHA-256, `test|production` mode, target profile/provider IDs nullable, constrained state/result и timestamps; `deployment_job_events` с `(job_id, sequence)` PK, FK `ON DELETE RESTRICT`, status/stage/message/time; индексы на jobs; PK `(job_id, sequence)` покрывает чтение событий в нужном порядке; trigger запрещает UPDATE/DELETE events.
+- [x] **Step 3: Добавить interface и repository**:
 
 ```go
 type DeploymentRepository interface {
 	CreateDeploymentJob(context.Context, domain.DeploymentJob) (domain.DeploymentJob, error)
-	TransitionDeploymentJob(context.Context, string, domain.DeploymentState, domain.DeploymentEvent) error
+	TransitionDeploymentJob(context.Context, domain.DeploymentJob, domain.DeploymentEvent) error
 	GetDeploymentJob(context.Context, string) (domain.DeploymentJob, error)
 	ListDeploymentJobs(context.Context, int) ([]domain.DeploymentJobSummary, error)
 }
 ```
 
-- [ ] **Step 4: Реализовать** pgx transactions: `TransitionDeploymentJob` блокирует job row, валидирует ожидаемый state, обновляет job и добавляет следующую event sequence в той же транзакции; API не предоставляет update/delete для event rows.
-- [ ] **Step 5: Проверить** `go test -tags=integration ./internal/core/infrastructure/postgres -run '^$' -count=1` для compile-only и при заранее заданной выделенной `CARVION_TEST_DATABASE_URL` с миграцией 00004 — `go test -tags=integration ./internal/core/infrastructure/postgres -run Deployment -count=1`. Без переменной PostgreSQL test helper должен сообщить skip. Не запускать integration suite на development DB.
-- [ ] **Step 6: Commit** `feat: persist deployment audit jobs`.
+`TransitionDeploymentJob` принимает целевую snapshot-модель, чтобы в той же транзакции записывать preflight/result/recovery вместе с новым state и событием; репозиторий сверяет immutable поля и блокирует строку job.
+
+- [x] **Step 4: Реализовать** pgx transactions: `TransitionDeploymentJob` блокирует job row, валидирует ожидаемый state, обновляет job и добавляет следующую event sequence в той же транзакции; API не предоставляет update/delete для event rows.
+- [x] **Step 5: Проверить** `go test -tags=integration ./internal/core/infrastructure/postgres -run '^$' -count=1` для compile-only; также выполнен обычный `go test ./internal/core/infrastructure/postgres -count=1`. `CARVION_TEST_DATABASE_URL` отсутствует, поэтому PostgreSQL integration against migration 00004 не запускался.
+- [x] **Step 6: Commit** `feat: persist deployment audit jobs`.
 
 ## Task 4: Provider capability contract и test provider
 
