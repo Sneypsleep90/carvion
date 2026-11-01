@@ -5,7 +5,9 @@ import (
 	"errors"
 	"log/slog"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/Sneypsleep90/carvion/internal/config"
 	"github.com/Sneypsleep90/carvion/internal/core/application"
@@ -252,6 +254,134 @@ func TestSimulatorCancellationStopsActiveCoreRun(t *testing.T) {
 	}
 }
 
+func TestDeploymentFacadeStartsAsyncPersistsEventsAndDelegatesQueries(t *testing.T) {
+	wailsContext := context.WithValue(context.Background(), deploymentContextKey{}, "wails-context")
+	core := newDeploymentCoreSpy()
+	core.waitForCancel = true
+	core.requireContext = true
+	runtime := &runtimeSpy{}
+	events := make(chan domain.DeploymentEvent, 4)
+	service := &ApplicationService{
+		loadConfig: func() (config.Config, error) { return config.Config{}, nil },
+		startRuntime: func(context.Context, config.Config, *slog.Logger) (coreService, managedRuntime, error) {
+			return core, runtime, nil
+		},
+		emitDeploymentProgress: func(event domain.DeploymentEvent) error {
+			events <- event
+			return errors.New("live listener unavailable")
+		},
+	}
+	if err := service.ServiceStartup(wailsContext, wailsapp.ServiceOptions{}); err != nil {
+		t.Fatal(err)
+	}
+
+	request := domain.DeploymentRequest{ProjectID: "project-1", TargetProfileID: "demo-android-platform-a", Mode: domain.DeploymentModeTest}
+	job, err := service.StartDeploymentJob(request)
+	if err != nil || job.ID != "deployment-1" || job.State != domain.DeploymentStateQueued {
+		t.Fatalf("StartDeploymentJob() = %+v, %v", job, err)
+	}
+	<-core.started
+	select {
+	case event := <-events:
+		if event.JobID != job.ID || event.Sequence != 2 {
+			t.Fatalf("deployment event = %+v", event)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Wails event publisher did not receive persisted progress")
+	}
+	if core.runCalls != 1 || core.startCalls != 1 || core.runContext == nil || core.runContext.Value(deploymentContextKey{}) != "wails-context" {
+		t.Fatalf("Core start=%d run=%d context=%v", core.startCalls, core.runCalls, core.runContext)
+	}
+	if _, err := service.GetDeploymentJob(job.ID); err != nil {
+		t.Fatalf("GetDeploymentJob() error = %v", err)
+	}
+	if summaries, err := service.ListDeploymentJobs(20); err != nil || len(summaries) != 1 {
+		t.Fatalf("ListDeploymentJobs() = %+v, %v", summaries, err)
+	}
+	if _, err := service.CancelDeploymentJob(job.ID); err != nil {
+		t.Fatalf("CancelDeploymentJob() error = %v", err)
+	}
+	select {
+	case <-core.runFinished:
+	case <-time.After(time.Second):
+		t.Fatal("CancelDeploymentJob() did not cancel the active Core run")
+	}
+	if core.cancelCalls != 1 {
+		t.Fatalf("Core cancel calls = %d, want 1", core.cancelCalls)
+	}
+	if err := service.ServiceShutdown(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDeploymentFacadeShutdownCancelsRunsBeforeClosingRuntime(t *testing.T) {
+	core := newDeploymentCoreSpy()
+	core.waitForCancel = true
+	runtime := &runtimeSpy{}
+	service := &ApplicationService{
+		loadConfig: func() (config.Config, error) { return config.Config{}, nil },
+		startRuntime: func(context.Context, config.Config, *slog.Logger) (coreService, managedRuntime, error) {
+			return core, runtime, nil
+		},
+	}
+	if err := service.ServiceStartup(context.Background(), wailsapp.ServiceOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.StartDeploymentJob(domain.DeploymentRequest{ProjectID: "project-1", TargetProfileID: "demo-profile", Mode: domain.DeploymentModeTest}); err != nil {
+		t.Fatal(err)
+	}
+	<-core.started
+	if err := service.ServiceShutdown(); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-core.runFinished:
+	default:
+		t.Fatal("ServiceShutdown() closed runtime before the deployment worker stopped")
+	}
+	if !runtime.closed {
+		t.Fatal("ServiceShutdown() did not close runtime after deployment cancellation")
+	}
+}
+
+func TestDeploymentFacadeRejectsDuplicateActiveJobID(t *testing.T) {
+	core := newDeploymentCoreSpy()
+	core.waitForCancel = true
+	service := &ApplicationService{
+		loadConfig: func() (config.Config, error) { return config.Config{}, nil },
+		startRuntime: func(context.Context, config.Config, *slog.Logger) (coreService, managedRuntime, error) {
+			return core, &runtimeSpy{}, nil
+		},
+	}
+	if err := service.ServiceStartup(context.Background(), wailsapp.ServiceOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	request := domain.DeploymentRequest{ProjectID: "project-1", TargetProfileID: "demo-profile", Mode: domain.DeploymentModeTest}
+	if _, err := service.StartDeploymentJob(request); err != nil {
+		t.Fatal(err)
+	}
+	<-core.started
+	if _, err := service.StartDeploymentJob(request); !errors.Is(err, domain.ErrInvalidArgument) {
+		t.Fatalf("duplicate StartDeploymentJob() error = %v, want invalid argument", err)
+	}
+	if core.runCalls != 1 {
+		t.Fatalf("duplicate job started %d worker runs, want 1", core.runCalls)
+	}
+	if err := service.ServiceShutdown(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDeploymentFacadeReportsUnavailableCore(t *testing.T) {
+	service := &ApplicationService{}
+	if _, err := service.StartDeploymentJob(domain.DeploymentRequest{}); !errors.Is(err, ErrCoreUnavailable) {
+		t.Fatalf("StartDeploymentJob() error = %v, want ErrCoreUnavailable", err)
+	}
+	if _, err := service.GetDeploymentJob("job-1"); !errors.Is(err, ErrCoreUnavailable) {
+		t.Fatalf("GetDeploymentJob() error = %v, want ErrCoreUnavailable", err)
+	}
+}
+
 type coreSpy struct {
 	adapters             []domain.AdapterInfo
 	compatibility        domain.CompatibilityResult
@@ -315,6 +445,8 @@ type simulatorContextKey struct{}
 
 type geelyContextKey struct{}
 
+type deploymentContextKey struct{}
+
 type geelyResearchCoreSpy struct {
 	*coreSpy
 	evidenceCalls int
@@ -324,6 +456,67 @@ type geelyResearchCoreSpy struct {
 	reportCalls   int
 	context       context.Context
 	profileJSON   string
+}
+
+type deploymentCoreSpy struct {
+	*coreSpy
+	mu             sync.Mutex
+	startCalls     int
+	runCalls       int
+	cancelCalls    int
+	request        domain.DeploymentRequest
+	jobID          string
+	runContext     context.Context
+	waitForCancel  bool
+	requireContext bool
+	started        chan struct{}
+	runFinished    chan struct{}
+}
+
+func newDeploymentCoreSpy() *deploymentCoreSpy {
+	return &deploymentCoreSpy{coreSpy: &coreSpy{}, started: make(chan struct{}), runFinished: make(chan struct{})}
+}
+
+func (c *deploymentCoreSpy) StartDeploymentJob(ctx context.Context, request domain.DeploymentRequest) (domain.DeploymentJob, error) {
+	c.mu.Lock()
+	c.startCalls++
+	c.request = request
+	c.mu.Unlock()
+	if c.requireContext && ctx.Value(deploymentContextKey{}) == nil {
+		return domain.DeploymentJob{}, errors.New("Wails context was not propagated")
+	}
+	return domain.DeploymentJob{ID: "deployment-1", ProjectID: request.ProjectID, Mode: request.Mode, State: domain.DeploymentStateQueued,
+		Events: []domain.DeploymentEvent{{JobID: "deployment-1", Sequence: 1, State: domain.DeploymentStateQueued, Stage: "queued", Message: "queued"}}}, nil
+}
+
+func (c *deploymentCoreSpy) RunDeploymentJob(ctx context.Context, id string, publish application.DeploymentProgressPublisher) (domain.DeploymentJob, error) {
+	c.mu.Lock()
+	c.runCalls++
+	c.jobID, c.runContext = id, ctx
+	c.mu.Unlock()
+	close(c.started)
+	defer close(c.runFinished)
+	_ = publish(domain.DeploymentEvent{JobID: id, Sequence: 2, State: domain.DeploymentStatePreflighting, Stage: "preflight.started", Message: "progress"})
+	if c.waitForCancel {
+		<-ctx.Done()
+		return domain.DeploymentJob{ID: id, State: domain.DeploymentStateCancelled}, nil
+	}
+	return domain.DeploymentJob{ID: id, State: domain.DeploymentStateSimulated}, nil
+}
+
+func (c *deploymentCoreSpy) CancelDeploymentJob(_ context.Context, id string) (domain.DeploymentJob, error) {
+	c.mu.Lock()
+	c.cancelCalls++
+	c.mu.Unlock()
+	return domain.DeploymentJob{ID: id, State: domain.DeploymentStateSimulating}, nil
+}
+
+func (c *deploymentCoreSpy) GetDeploymentJob(_ context.Context, id string) (domain.DeploymentJob, error) {
+	return domain.DeploymentJob{ID: id, State: domain.DeploymentStateSimulating}, nil
+}
+
+func (c *deploymentCoreSpy) ListDeploymentJobs(context.Context, int) ([]domain.DeploymentJobSummary, error) {
+	return []domain.DeploymentJobSummary{{ID: "deployment-1"}}, nil
 }
 
 func (c *geelyResearchCoreSpy) ListGeelyResearchEvidence(ctx context.Context) ([]domain.GeelyResearchEvidence, error) {

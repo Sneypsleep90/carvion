@@ -3,24 +3,104 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import { Create as $Create } from "@wailsio/runtime";
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as json$0 from "../../../../../../encoding/json/models.js";
 
-export interface AdapterCapabilities {
+export class AdapterCapabilities {
     "Detect": boolean;
     "CheckCompatibility": boolean;
     "InspectResources": boolean;
+
+    /** Creates a new AdapterCapabilities instance. */
+    constructor($$source: Partial<AdapterCapabilities> = {}) {
+        if (!("Detect" in $$source)) {
+            this["Detect"] = false;
+        }
+        if (!("CheckCompatibility" in $$source)) {
+            this["CheckCompatibility"] = false;
+        }
+        if (!("InspectResources" in $$source)) {
+            this["InspectResources"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new AdapterCapabilities instance from a string or object.
+     */
+    static createFrom($$source: any = {}): AdapterCapabilities {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new AdapterCapabilities($$parsedSource as Partial<AdapterCapabilities>);
+    }
 }
 
-export interface AdapterInfo {
+export class AdapterInfo {
     "ID": string;
     "Name": string;
     "Version": string;
     "APIVersion": string;
     "SDKVersion": string;
     "Capabilities": AdapterCapabilities;
-    "InputTypes": string[] | null;
-    "ResourceFormats": string[] | null;
+    "InputTypes": string[];
+    "ResourceFormats": string[];
     "Status": AdapterStatus;
+
+    /** Creates a new AdapterInfo instance. */
+    constructor($$source: Partial<AdapterInfo> = {}) {
+        if (!("ID" in $$source)) {
+            this["ID"] = "";
+        }
+        if (!("Name" in $$source)) {
+            this["Name"] = "";
+        }
+        if (!("Version" in $$source)) {
+            this["Version"] = "";
+        }
+        if (!("APIVersion" in $$source)) {
+            this["APIVersion"] = "";
+        }
+        if (!("SDKVersion" in $$source)) {
+            this["SDKVersion"] = "";
+        }
+        if (!("Capabilities" in $$source)) {
+            this["Capabilities"] = (new AdapterCapabilities());
+        }
+        if (!("InputTypes" in $$source)) {
+            this["InputTypes"] = [];
+        }
+        if (!("ResourceFormats" in $$source)) {
+            this["ResourceFormats"] = [];
+        }
+        if (!("Status" in $$source)) {
+            this["Status"] = AdapterStatus.$zero;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new AdapterInfo instance from a string or object.
+     */
+    static createFrom($$source: any = {}): AdapterInfo {
+        const $$createField5_0 = $$createType0;
+        const $$createField6_0 = $$createType1;
+        const $$createField7_0 = $$createType1;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("Capabilities" in $$parsedSource) {
+            $$parsedSource["Capabilities"] = $$createField5_0($$parsedSource["Capabilities"]);
+        }
+        if ("InputTypes" in $$parsedSource) {
+            $$parsedSource["InputTypes"] = $$createField6_0($$parsedSource["InputTypes"]);
+        }
+        if ("ResourceFormats" in $$parsedSource) {
+            $$parsedSource["ResourceFormats"] = $$createField7_0($$parsedSource["ResourceFormats"]);
+        }
+        return new AdapterInfo($$parsedSource as Partial<AdapterInfo>);
+    }
 }
 
 export enum AdapterStatus {
@@ -33,15 +113,70 @@ export enum AdapterStatus {
     AdapterStatusUnavailable = "unavailable",
 };
 
-export interface CompatibilityRequest {
+export class CompatibilityRequest {
     "Identity": VehicleIdentity;
     "Hardware": HardwareInfo;
     "Firmware": FirmwareInfo;
+
+    /** Creates a new CompatibilityRequest instance. */
+    constructor($$source: Partial<CompatibilityRequest> = {}) {
+        if (!("Identity" in $$source)) {
+            this["Identity"] = (new VehicleIdentity());
+        }
+        if (!("Hardware" in $$source)) {
+            this["Hardware"] = (new HardwareInfo());
+        }
+        if (!("Firmware" in $$source)) {
+            this["Firmware"] = (new FirmwareInfo());
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new CompatibilityRequest instance from a string or object.
+     */
+    static createFrom($$source: any = {}): CompatibilityRequest {
+        const $$createField0_0 = $$createType2;
+        const $$createField1_0 = $$createType3;
+        const $$createField2_0 = $$createType4;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("Identity" in $$parsedSource) {
+            $$parsedSource["Identity"] = $$createField0_0($$parsedSource["Identity"]);
+        }
+        if ("Hardware" in $$parsedSource) {
+            $$parsedSource["Hardware"] = $$createField1_0($$parsedSource["Hardware"]);
+        }
+        if ("Firmware" in $$parsedSource) {
+            $$parsedSource["Firmware"] = $$createField2_0($$parsedSource["Firmware"]);
+        }
+        return new CompatibilityRequest($$parsedSource as Partial<CompatibilityRequest>);
+    }
 }
 
-export interface CompatibilityResult {
+export class CompatibilityResult {
     "Status": CompatibilityStatus;
     "Reason": string;
+
+    /** Creates a new CompatibilityResult instance. */
+    constructor($$source: Partial<CompatibilityResult> = {}) {
+        if (!("Status" in $$source)) {
+            this["Status"] = CompatibilityStatus.$zero;
+        }
+        if (!("Reason" in $$source)) {
+            this["Reason"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new CompatibilityResult instance from a string or object.
+     */
+    static createFrom($$source: any = {}): CompatibilityResult {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new CompatibilityResult($$parsedSource as Partial<CompatibilityResult>);
+    }
 }
 
 export enum CompatibilityStatus {
@@ -55,49 +190,556 @@ export enum CompatibilityStatus {
     StatusUnknown = "unknown",
 };
 
-export interface DetectionResult {
+export class DeploymentCheck {
+    "id": string;
+    "status": DeploymentCheckStatus;
+    "required": boolean;
+    "message": string;
+
+    /** Creates a new DeploymentCheck instance. */
+    constructor($$source: Partial<DeploymentCheck> = {}) {
+        if (!("id" in $$source)) {
+            this["id"] = "";
+        }
+        if (!("status" in $$source)) {
+            this["status"] = DeploymentCheckStatus.$zero;
+        }
+        if (!("required" in $$source)) {
+            this["required"] = false;
+        }
+        if (!("message" in $$source)) {
+            this["message"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new DeploymentCheck instance from a string or object.
+     */
+    static createFrom($$source: any = {}): DeploymentCheck {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new DeploymentCheck($$parsedSource as Partial<DeploymentCheck>);
+    }
+}
+
+export enum DeploymentCheckStatus {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero = "",
+
+    DeploymentCheckPassed = "passed",
+    DeploymentCheckBlocked = "blocked",
+    DeploymentCheckFailed = "failed",
+    DeploymentCheckUnknown = "unknown",
+};
+
+export class DeploymentEvent {
+    "jobId": string;
+    "sequence": number;
+    "at": string;
+    "state": DeploymentState;
+    "stage": string;
+    "message": string;
+
+    /** Creates a new DeploymentEvent instance. */
+    constructor($$source: Partial<DeploymentEvent> = {}) {
+        if (!("jobId" in $$source)) {
+            this["jobId"] = "";
+        }
+        if (!("sequence" in $$source)) {
+            this["sequence"] = 0;
+        }
+        if (!("at" in $$source)) {
+            this["at"] = "0001-01-01T00:00:00.000Z";
+        }
+        if (!("state" in $$source)) {
+            this["state"] = DeploymentState.$zero;
+        }
+        if (!("stage" in $$source)) {
+            this["stage"] = "";
+        }
+        if (!("message" in $$source)) {
+            this["message"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new DeploymentEvent instance from a string or object.
+     */
+    static createFrom($$source: any = {}): DeploymentEvent {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new DeploymentEvent($$parsedSource as Partial<DeploymentEvent>);
+    }
+}
+
+export class DeploymentJob {
+    "id": string;
+    "projectId": string;
+    "targetProfileId"?: string;
+    "mode": DeploymentMode;
+    "providerId"?: string;
+    "packageSha256": string;
+    "state": DeploymentState;
+    "preflight": DeploymentPreflight;
+    "resultVerification": DeploymentResultVerification;
+    "recovery": RecoveryCapabilityResult;
+    "errorMessage"?: string;
+    "events": DeploymentEvent[];
+    "createdAt"?: string;
+    "updatedAt"?: string;
+
+    /** Creates a new DeploymentJob instance. */
+    constructor($$source: Partial<DeploymentJob> = {}) {
+        if (!("id" in $$source)) {
+            this["id"] = "";
+        }
+        if (!("projectId" in $$source)) {
+            this["projectId"] = "";
+        }
+        if (!("mode" in $$source)) {
+            this["mode"] = DeploymentMode.$zero;
+        }
+        if (!("packageSha256" in $$source)) {
+            this["packageSha256"] = "";
+        }
+        if (!("state" in $$source)) {
+            this["state"] = DeploymentState.$zero;
+        }
+        if (!("preflight" in $$source)) {
+            this["preflight"] = (new DeploymentPreflight());
+        }
+        if (!("resultVerification" in $$source)) {
+            this["resultVerification"] = (new DeploymentResultVerification());
+        }
+        if (!("recovery" in $$source)) {
+            this["recovery"] = (new RecoveryCapabilityResult());
+        }
+        if (!("events" in $$source)) {
+            this["events"] = [];
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new DeploymentJob instance from a string or object.
+     */
+    static createFrom($$source: any = {}): DeploymentJob {
+        const $$createField7_0 = $$createType5;
+        const $$createField8_0 = $$createType6;
+        const $$createField9_0 = $$createType7;
+        const $$createField11_0 = $$createType9;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("preflight" in $$parsedSource) {
+            $$parsedSource["preflight"] = $$createField7_0($$parsedSource["preflight"]);
+        }
+        if ("resultVerification" in $$parsedSource) {
+            $$parsedSource["resultVerification"] = $$createField8_0($$parsedSource["resultVerification"]);
+        }
+        if ("recovery" in $$parsedSource) {
+            $$parsedSource["recovery"] = $$createField9_0($$parsedSource["recovery"]);
+        }
+        if ("events" in $$parsedSource) {
+            $$parsedSource["events"] = $$createField11_0($$parsedSource["events"]);
+        }
+        return new DeploymentJob($$parsedSource as Partial<DeploymentJob>);
+    }
+}
+
+export class DeploymentJobSummary {
+    "id": string;
+    "projectId": string;
+    "targetProfileId"?: string;
+    "mode": DeploymentMode;
+    "packageSha256": string;
+    "state": DeploymentState;
+    "createdAt": string;
+    "updatedAt": string;
+
+    /** Creates a new DeploymentJobSummary instance. */
+    constructor($$source: Partial<DeploymentJobSummary> = {}) {
+        if (!("id" in $$source)) {
+            this["id"] = "";
+        }
+        if (!("projectId" in $$source)) {
+            this["projectId"] = "";
+        }
+        if (!("mode" in $$source)) {
+            this["mode"] = DeploymentMode.$zero;
+        }
+        if (!("packageSha256" in $$source)) {
+            this["packageSha256"] = "";
+        }
+        if (!("state" in $$source)) {
+            this["state"] = DeploymentState.$zero;
+        }
+        if (!("createdAt" in $$source)) {
+            this["createdAt"] = "0001-01-01T00:00:00.000Z";
+        }
+        if (!("updatedAt" in $$source)) {
+            this["updatedAt"] = "0001-01-01T00:00:00.000Z";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new DeploymentJobSummary instance from a string or object.
+     */
+    static createFrom($$source: any = {}): DeploymentJobSummary {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new DeploymentJobSummary($$parsedSource as Partial<DeploymentJobSummary>);
+    }
+}
+
+export enum DeploymentMode {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero = "",
+
+    DeploymentModeTest = "test",
+    DeploymentModeProduction = "production",
+};
+
+export class DeploymentPreflight {
+    "ready": boolean;
+    "checks": DeploymentCheck[];
+
+    /** Creates a new DeploymentPreflight instance. */
+    constructor($$source: Partial<DeploymentPreflight> = {}) {
+        if (!("ready" in $$source)) {
+            this["ready"] = false;
+        }
+        if (!("checks" in $$source)) {
+            this["checks"] = [];
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new DeploymentPreflight instance from a string or object.
+     */
+    static createFrom($$source: any = {}): DeploymentPreflight {
+        const $$createField1_0 = $$createType11;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("checks" in $$parsedSource) {
+            $$parsedSource["checks"] = $$createField1_0($$parsedSource["checks"]);
+        }
+        return new DeploymentPreflight($$parsedSource as Partial<DeploymentPreflight>);
+    }
+}
+
+export class DeploymentRequest {
+    "projectId": string;
+    "targetProfileId"?: string;
+    "mode": DeploymentMode;
+
+    /** Creates a new DeploymentRequest instance. */
+    constructor($$source: Partial<DeploymentRequest> = {}) {
+        if (!("projectId" in $$source)) {
+            this["projectId"] = "";
+        }
+        if (!("mode" in $$source)) {
+            this["mode"] = DeploymentMode.$zero;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new DeploymentRequest instance from a string or object.
+     */
+    static createFrom($$source: any = {}): DeploymentRequest {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new DeploymentRequest($$parsedSource as Partial<DeploymentRequest>);
+    }
+}
+
+export class DeploymentResultVerification {
+    "verified": boolean;
+    "simulated": boolean;
+    "message": string;
+
+    /** Creates a new DeploymentResultVerification instance. */
+    constructor($$source: Partial<DeploymentResultVerification> = {}) {
+        if (!("verified" in $$source)) {
+            this["verified"] = false;
+        }
+        if (!("simulated" in $$source)) {
+            this["simulated"] = false;
+        }
+        if (!("message" in $$source)) {
+            this["message"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new DeploymentResultVerification instance from a string or object.
+     */
+    static createFrom($$source: any = {}): DeploymentResultVerification {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new DeploymentResultVerification($$parsedSource as Partial<DeploymentResultVerification>);
+    }
+}
+
+export enum DeploymentState {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero = "",
+
+    DeploymentStateQueued = "queued",
+    DeploymentStatePreflighting = "preflighting",
+    DeploymentStateBlocked = "blocked",
+    DeploymentStatePreflightPassed = "preflight-passed",
+    DeploymentStateSimulating = "simulating",
+    DeploymentStateVerifying = "verifying",
+    DeploymentStateSimulated = "simulated",
+    DeploymentStateFailed = "failed",
+    DeploymentStateCancelled = "cancelled",
+};
+
+export class DetectionResult {
     "Status": CompatibilityStatus;
     "Identity": VehicleIdentity;
     "Reason": string;
+
+    /** Creates a new DetectionResult instance. */
+    constructor($$source: Partial<DetectionResult> = {}) {
+        if (!("Status" in $$source)) {
+            this["Status"] = CompatibilityStatus.$zero;
+        }
+        if (!("Identity" in $$source)) {
+            this["Identity"] = (new VehicleIdentity());
+        }
+        if (!("Reason" in $$source)) {
+            this["Reason"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new DetectionResult instance from a string or object.
+     */
+    static createFrom($$source: any = {}): DetectionResult {
+        const $$createField1_0 = $$createType2;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("Identity" in $$parsedSource) {
+            $$parsedSource["Identity"] = $$createField1_0($$parsedSource["Identity"]);
+        }
+        return new DetectionResult($$parsedSource as Partial<DetectionResult>);
+    }
 }
 
-export interface FirmwareInfo {
+export class FirmwareInfo {
     "BuildID": string;
     "Version": string;
+
+    /** Creates a new FirmwareInfo instance. */
+    constructor($$source: Partial<FirmwareInfo> = {}) {
+        if (!("BuildID" in $$source)) {
+            this["BuildID"] = "";
+        }
+        if (!("Version" in $$source)) {
+            this["Version"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new FirmwareInfo instance from a string or object.
+     */
+    static createFrom($$source: any = {}): FirmwareInfo {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new FirmwareInfo($$parsedSource as Partial<FirmwareInfo>);
+    }
 }
 
-export interface GeelyDiagnosticReport {
+export class GeelyDiagnosticReport {
     "filename": string;
     "content": string;
+
+    /** Creates a new GeelyDiagnosticReport instance. */
+    constructor($$source: Partial<GeelyDiagnosticReport> = {}) {
+        if (!("filename" in $$source)) {
+            this["filename"] = "";
+        }
+        if (!("content" in $$source)) {
+            this["content"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new GeelyDiagnosticReport instance from a string or object.
+     */
+    static createFrom($$source: any = {}): GeelyDiagnosticReport {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new GeelyDiagnosticReport($$parsedSource as Partial<GeelyDiagnosticReport>);
+    }
 }
 
-export interface GeelyDiagnosticReportRequest {
+export class GeelyDiagnosticReportRequest {
     "profileJson": string;
     "resource"?: GeelyResourceRequest | null;
+
+    /** Creates a new GeelyDiagnosticReportRequest instance. */
+    constructor($$source: Partial<GeelyDiagnosticReportRequest> = {}) {
+        if (!("profileJson" in $$source)) {
+            this["profileJson"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new GeelyDiagnosticReportRequest instance from a string or object.
+     */
+    static createFrom($$source: any = {}): GeelyDiagnosticReportRequest {
+        const $$createField1_0 = $$createType13;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("resource" in $$parsedSource) {
+            $$parsedSource["resource"] = $$createField1_0($$parsedSource["resource"]);
+        }
+        return new GeelyDiagnosticReportRequest($$parsedSource as Partial<GeelyDiagnosticReportRequest>);
+    }
 }
 
-export interface GeelyLocalizationImportRequest {
+export class GeelyLocalizationImportRequest {
     "profileJson": string;
     "name": string;
     "locale": string;
     "filename": string;
     "format": LocalizationFormat;
     "content": string;
+
+    /** Creates a new GeelyLocalizationImportRequest instance. */
+    constructor($$source: Partial<GeelyLocalizationImportRequest> = {}) {
+        if (!("profileJson" in $$source)) {
+            this["profileJson"] = "";
+        }
+        if (!("name" in $$source)) {
+            this["name"] = "";
+        }
+        if (!("locale" in $$source)) {
+            this["locale"] = "";
+        }
+        if (!("filename" in $$source)) {
+            this["filename"] = "";
+        }
+        if (!("format" in $$source)) {
+            this["format"] = LocalizationFormat.$zero;
+        }
+        if (!("content" in $$source)) {
+            this["content"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new GeelyLocalizationImportRequest instance from a string or object.
+     */
+    static createFrom($$source: any = {}): GeelyLocalizationImportRequest {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new GeelyLocalizationImportRequest($$parsedSource as Partial<GeelyLocalizationImportRequest>);
+    }
 }
 
-export interface GeelyLocalizationImportResult {
+export class GeelyLocalizationImportResult {
     "project": LocalizationProject;
     "analysis": GeelyResearchAnalysis;
     "inspection": ResourceInspection;
+
+    /** Creates a new GeelyLocalizationImportResult instance. */
+    constructor($$source: Partial<GeelyLocalizationImportResult> = {}) {
+        if (!("project" in $$source)) {
+            this["project"] = (new LocalizationProject());
+        }
+        if (!("analysis" in $$source)) {
+            this["analysis"] = (new GeelyResearchAnalysis());
+        }
+        if (!("inspection" in $$source)) {
+            this["inspection"] = (new ResourceInspection());
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new GeelyLocalizationImportResult instance from a string or object.
+     */
+    static createFrom($$source: any = {}): GeelyLocalizationImportResult {
+        const $$createField0_0 = $$createType14;
+        const $$createField1_0 = $$createType15;
+        const $$createField2_0 = $$createType16;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("project" in $$parsedSource) {
+            $$parsedSource["project"] = $$createField0_0($$parsedSource["project"]);
+        }
+        if ("analysis" in $$parsedSource) {
+            $$parsedSource["analysis"] = $$createField1_0($$parsedSource["analysis"]);
+        }
+        if ("inspection" in $$parsedSource) {
+            $$parsedSource["inspection"] = $$createField2_0($$parsedSource["inspection"]);
+        }
+        return new GeelyLocalizationImportResult($$parsedSource as Partial<GeelyLocalizationImportResult>);
+    }
 }
 
-export interface GeelyResearchAnalysis {
+export class GeelyResearchAnalysis {
     "profile": GeelyResearchProfile;
     "detection": DetectionResult;
     "compatibility": CompatibilityResult;
+
+    /** Creates a new GeelyResearchAnalysis instance. */
+    constructor($$source: Partial<GeelyResearchAnalysis> = {}) {
+        if (!("profile" in $$source)) {
+            this["profile"] = (new GeelyResearchProfile());
+        }
+        if (!("detection" in $$source)) {
+            this["detection"] = (new DetectionResult());
+        }
+        if (!("compatibility" in $$source)) {
+            this["compatibility"] = (new CompatibilityResult());
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new GeelyResearchAnalysis instance from a string or object.
+     */
+    static createFrom($$source: any = {}): GeelyResearchAnalysis {
+        const $$createField0_0 = $$createType17;
+        const $$createField1_0 = $$createType18;
+        const $$createField2_0 = $$createType19;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("profile" in $$parsedSource) {
+            $$parsedSource["profile"] = $$createField0_0($$parsedSource["profile"]);
+        }
+        if ("detection" in $$parsedSource) {
+            $$parsedSource["detection"] = $$createField1_0($$parsedSource["detection"]);
+        }
+        if ("compatibility" in $$parsedSource) {
+            $$parsedSource["compatibility"] = $$createField2_0($$parsedSource["compatibility"]);
+        }
+        return new GeelyResearchAnalysis($$parsedSource as Partial<GeelyResearchAnalysis>);
+    }
 }
 
-export interface GeelyResearchEvidence {
+export class GeelyResearchEvidence {
     "id": string;
     "title": string;
     "publisher": string;
@@ -106,13 +748,48 @@ export interface GeelyResearchEvidence {
     "retrievedAt": string;
     "scope": string;
     "confidence": string;
+
+    /** Creates a new GeelyResearchEvidence instance. */
+    constructor($$source: Partial<GeelyResearchEvidence> = {}) {
+        if (!("id" in $$source)) {
+            this["id"] = "";
+        }
+        if (!("title" in $$source)) {
+            this["title"] = "";
+        }
+        if (!("publisher" in $$source)) {
+            this["publisher"] = "";
+        }
+        if (!("url" in $$source)) {
+            this["url"] = "";
+        }
+        if (!("retrievedAt" in $$source)) {
+            this["retrievedAt"] = "";
+        }
+        if (!("scope" in $$source)) {
+            this["scope"] = "";
+        }
+        if (!("confidence" in $$source)) {
+            this["confidence"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new GeelyResearchEvidence instance from a string or object.
+     */
+    static createFrom($$source: any = {}): GeelyResearchEvidence {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new GeelyResearchEvidence($$parsedSource as Partial<GeelyResearchEvidence>);
+    }
 }
 
 /**
  * GeelyResearchProfile contains file-reported values and their provenance.
  * Imported profile data is never equivalent to live vehicle detection.
  */
-export interface GeelyResearchProfile {
+export class GeelyResearchProfile {
     "schema": string;
     "profileId": string;
     "manufacturer"?: string;
@@ -128,35 +805,170 @@ export interface GeelyResearchProfile {
     "firmwareVersion"?: string;
     "firmwareBuildId"?: string;
     "origin": string;
+
+    /** Creates a new GeelyResearchProfile instance. */
+    constructor($$source: Partial<GeelyResearchProfile> = {}) {
+        if (!("schema" in $$source)) {
+            this["schema"] = "";
+        }
+        if (!("profileId" in $$source)) {
+            this["profileId"] = "";
+        }
+        if (!("origin" in $$source)) {
+            this["origin"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new GeelyResearchProfile instance from a string or object.
+     */
+    static createFrom($$source: any = {}): GeelyResearchProfile {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new GeelyResearchProfile($$parsedSource as Partial<GeelyResearchProfile>);
+    }
 }
 
-export interface GeelyResourceRequest {
+export class GeelyResourceRequest {
     "filename": string;
     "format": LocalizationFormat;
     "content": string;
+
+    /** Creates a new GeelyResourceRequest instance. */
+    constructor($$source: Partial<GeelyResourceRequest> = {}) {
+        if (!("filename" in $$source)) {
+            this["filename"] = "";
+        }
+        if (!("format" in $$source)) {
+            this["format"] = LocalizationFormat.$zero;
+        }
+        if (!("content" in $$source)) {
+            this["content"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new GeelyResourceRequest instance from a string or object.
+     */
+    static createFrom($$source: any = {}): GeelyResourceRequest {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new GeelyResourceRequest($$parsedSource as Partial<GeelyResourceRequest>);
+    }
 }
 
-export interface HardwareInfo {
+export class HardwareInfo {
     "PlatformID": string;
     "Revision": string;
+
+    /** Creates a new HardwareInfo instance. */
+    constructor($$source: Partial<HardwareInfo> = {}) {
+        if (!("PlatformID" in $$source)) {
+            this["PlatformID"] = "";
+        }
+        if (!("Revision" in $$source)) {
+            this["Revision"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new HardwareInfo instance from a string or object.
+     */
+    static createFrom($$source: any = {}): HardwareInfo {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new HardwareInfo($$parsedSource as Partial<HardwareInfo>);
+    }
 }
 
-export interface InfotainmentPlatform {
+export class InfotainmentPlatform {
     "ID": string;
     "Name": string;
     "ManufacturerID": string | null;
     "ManufacturerName": string | null;
+
+    /** Creates a new InfotainmentPlatform instance. */
+    constructor($$source: Partial<InfotainmentPlatform> = {}) {
+        if (!("ID" in $$source)) {
+            this["ID"] = "";
+        }
+        if (!("Name" in $$source)) {
+            this["Name"] = "";
+        }
+        if (!("ManufacturerID" in $$source)) {
+            this["ManufacturerID"] = null;
+        }
+        if (!("ManufacturerName" in $$source)) {
+            this["ManufacturerName"] = null;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new InfotainmentPlatform instance from a string or object.
+     */
+    static createFrom($$source: any = {}): InfotainmentPlatform {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new InfotainmentPlatform($$parsedSource as Partial<InfotainmentPlatform>);
+    }
 }
 
-export interface InspectResourcesRequest {
+export class InspectResourcesRequest {
     "Format": string;
     "Filename": string;
     "Content": string;
+
+    /** Creates a new InspectResourcesRequest instance. */
+    constructor($$source: Partial<InspectResourcesRequest> = {}) {
+        if (!("Format" in $$source)) {
+            this["Format"] = "";
+        }
+        if (!("Filename" in $$source)) {
+            this["Filename"] = "";
+        }
+        if (!("Content" in $$source)) {
+            this["Content"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new InspectResourcesRequest instance from a string or object.
+     */
+    static createFrom($$source: any = {}): InspectResourcesRequest {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new InspectResourcesRequest($$parsedSource as Partial<InspectResourcesRequest>);
+    }
 }
 
-export interface LocalizationArtifact {
+export class LocalizationArtifact {
     "filename": string;
     "contentBase64": string;
+
+    /** Creates a new LocalizationArtifact instance. */
+    constructor($$source: Partial<LocalizationArtifact> = {}) {
+        if (!("filename" in $$source)) {
+            this["filename"] = "";
+        }
+        if (!("contentBase64" in $$source)) {
+            this["contentBase64"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new LocalizationArtifact instance from a string or object.
+     */
+    static createFrom($$source: any = {}): LocalizationArtifact {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new LocalizationArtifact($$parsedSource as Partial<LocalizationArtifact>);
+    }
 }
 
 export enum LocalizationFormat {
@@ -169,28 +981,100 @@ export enum LocalizationFormat {
     LocalizationFormatJSON = "carvion-json-v1",
 };
 
-export interface LocalizationPackage {
+export class LocalizationPackage {
     "id"?: string;
     "filename": string;
     "sha256": string;
     "size": number;
     "contentBase64": string;
+
+    /** Creates a new LocalizationPackage instance. */
+    constructor($$source: Partial<LocalizationPackage> = {}) {
+        if (!("filename" in $$source)) {
+            this["filename"] = "";
+        }
+        if (!("sha256" in $$source)) {
+            this["sha256"] = "";
+        }
+        if (!("size" in $$source)) {
+            this["size"] = 0;
+        }
+        if (!("contentBase64" in $$source)) {
+            this["contentBase64"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new LocalizationPackage instance from a string or object.
+     */
+    static createFrom($$source: any = {}): LocalizationPackage {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new LocalizationPackage($$parsedSource as Partial<LocalizationPackage>);
+    }
 }
 
-export interface LocalizationProject {
+export class LocalizationProject {
     "id": string;
     "name": string;
     "locale": string;
     "format": LocalizationFormat;
     "filename": string;
     "sourceSha256": string;
-    "resources": LocalizationResource[] | null;
-    "translations": LocalizationTranslation[] | null;
+    "resources": LocalizationResource[];
+    "translations": LocalizationTranslation[];
     "createdAt"?: string;
     "updatedAt"?: string;
+
+    /** Creates a new LocalizationProject instance. */
+    constructor($$source: Partial<LocalizationProject> = {}) {
+        if (!("id" in $$source)) {
+            this["id"] = "";
+        }
+        if (!("name" in $$source)) {
+            this["name"] = "";
+        }
+        if (!("locale" in $$source)) {
+            this["locale"] = "";
+        }
+        if (!("format" in $$source)) {
+            this["format"] = LocalizationFormat.$zero;
+        }
+        if (!("filename" in $$source)) {
+            this["filename"] = "";
+        }
+        if (!("sourceSha256" in $$source)) {
+            this["sourceSha256"] = "";
+        }
+        if (!("resources" in $$source)) {
+            this["resources"] = [];
+        }
+        if (!("translations" in $$source)) {
+            this["translations"] = [];
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new LocalizationProject instance from a string or object.
+     */
+    static createFrom($$source: any = {}): LocalizationProject {
+        const $$createField6_0 = $$createType21;
+        const $$createField7_0 = $$createType23;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("resources" in $$parsedSource) {
+            $$parsedSource["resources"] = $$createField6_0($$parsedSource["resources"]);
+        }
+        if ("translations" in $$parsedSource) {
+            $$parsedSource["translations"] = $$createField7_0($$parsedSource["translations"]);
+        }
+        return new LocalizationProject($$parsedSource as Partial<LocalizationProject>);
+    }
 }
 
-export interface LocalizationProjectSummary {
+export class LocalizationProjectSummary {
     "id": string;
     "name": string;
     "locale": string;
@@ -198,9 +1082,41 @@ export interface LocalizationProjectSummary {
     "filename": string;
     "sourceSha256": string;
     "updatedAt"?: string;
+
+    /** Creates a new LocalizationProjectSummary instance. */
+    constructor($$source: Partial<LocalizationProjectSummary> = {}) {
+        if (!("id" in $$source)) {
+            this["id"] = "";
+        }
+        if (!("name" in $$source)) {
+            this["name"] = "";
+        }
+        if (!("locale" in $$source)) {
+            this["locale"] = "";
+        }
+        if (!("format" in $$source)) {
+            this["format"] = LocalizationFormat.$zero;
+        }
+        if (!("filename" in $$source)) {
+            this["filename"] = "";
+        }
+        if (!("sourceSha256" in $$source)) {
+            this["sourceSha256"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new LocalizationProjectSummary instance from a string or object.
+     */
+    static createFrom($$source: any = {}): LocalizationProjectSummary {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new LocalizationProjectSummary($$parsedSource as Partial<LocalizationProjectSummary>);
+    }
 }
 
-export interface LocalizationResource {
+export class LocalizationResource {
     "key": string;
     "groupKey"?: string;
     "kind": LocalizationResourceKind;
@@ -213,6 +1129,44 @@ export interface LocalizationResource {
     "formatted": boolean;
     "present": boolean;
     "metadata"?: json$0.RawMessage;
+
+    /** Creates a new LocalizationResource instance. */
+    constructor($$source: Partial<LocalizationResource> = {}) {
+        if (!("key" in $$source)) {
+            this["key"] = "";
+        }
+        if (!("kind" in $$source)) {
+            this["kind"] = LocalizationResourceKind.$zero;
+        }
+        if (!("sourceText" in $$source)) {
+            this["sourceText"] = "";
+        }
+        if (!("sourceSha256" in $$source)) {
+            this["sourceSha256"] = "";
+        }
+        if (!("order" in $$source)) {
+            this["order"] = 0;
+        }
+        if (!("translatable" in $$source)) {
+            this["translatable"] = false;
+        }
+        if (!("formatted" in $$source)) {
+            this["formatted"] = false;
+        }
+        if (!("present" in $$source)) {
+            this["present"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new LocalizationResource instance from a string or object.
+     */
+    static createFrom($$source: any = {}): LocalizationResource {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new LocalizationResource($$parsedSource as Partial<LocalizationResource>);
+    }
 }
 
 export enum LocalizationResourceKind {
@@ -226,46 +1180,215 @@ export enum LocalizationResourceKind {
     ResourceKindPluralItem = "plural-item",
 };
 
-export interface LocalizationTranslation {
+export class LocalizationTranslation {
     "resourceKey": string;
     "locale": string;
     "targetText": string;
     "status": TranslationStatus;
     "approvedSourceSha256"?: string;
     "updatedAt"?: string;
+
+    /** Creates a new LocalizationTranslation instance. */
+    constructor($$source: Partial<LocalizationTranslation> = {}) {
+        if (!("resourceKey" in $$source)) {
+            this["resourceKey"] = "";
+        }
+        if (!("locale" in $$source)) {
+            this["locale"] = "";
+        }
+        if (!("targetText" in $$source)) {
+            this["targetText"] = "";
+        }
+        if (!("status" in $$source)) {
+            this["status"] = TranslationStatus.$zero;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new LocalizationTranslation instance from a string or object.
+     */
+    static createFrom($$source: any = {}): LocalizationTranslation {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new LocalizationTranslation($$parsedSource as Partial<LocalizationTranslation>);
+    }
 }
 
-export interface LocalizationValidationIssue {
+export class LocalizationValidationIssue {
     "code": string;
     "severity": string;
     "resourceKey"?: string;
     "message": string;
+
+    /** Creates a new LocalizationValidationIssue instance. */
+    constructor($$source: Partial<LocalizationValidationIssue> = {}) {
+        if (!("code" in $$source)) {
+            this["code"] = "";
+        }
+        if (!("severity" in $$source)) {
+            this["severity"] = "";
+        }
+        if (!("message" in $$source)) {
+            this["message"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new LocalizationValidationIssue instance from a string or object.
+     */
+    static createFrom($$source: any = {}): LocalizationValidationIssue {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new LocalizationValidationIssue($$parsedSource as Partial<LocalizationValidationIssue>);
+    }
 }
 
-export interface LocalizationValidationReport {
+export class LocalizationValidationReport {
     "valid": boolean;
     "locale"?: string;
     "checkedAt"?: string;
-    "issues": LocalizationValidationIssue[] | null;
+    "issues": LocalizationValidationIssue[];
+
+    /** Creates a new LocalizationValidationReport instance. */
+    constructor($$source: Partial<LocalizationValidationReport> = {}) {
+        if (!("valid" in $$source)) {
+            this["valid"] = false;
+        }
+        if (!("issues" in $$source)) {
+            this["issues"] = [];
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new LocalizationValidationReport instance from a string or object.
+     */
+    static createFrom($$source: any = {}): LocalizationValidationReport {
+        const $$createField3_0 = $$createType25;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("issues" in $$parsedSource) {
+            $$parsedSource["issues"] = $$createField3_0($$parsedSource["issues"]);
+        }
+        return new LocalizationValidationReport($$parsedSource as Partial<LocalizationValidationReport>);
+    }
 }
 
-export interface Manufacturer {
+export class Manufacturer {
     "ID": string;
     "Name": string;
+
+    /** Creates a new Manufacturer instance. */
+    constructor($$source: Partial<Manufacturer> = {}) {
+        if (!("ID" in $$source)) {
+            this["ID"] = "";
+        }
+        if (!("Name" in $$source)) {
+            this["Name"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new Manufacturer instance from a string or object.
+     */
+    static createFrom($$source: any = {}): Manufacturer {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new Manufacturer($$parsedSource as Partial<Manufacturer>);
+    }
 }
 
-export interface ResourceInspection {
-    "Resources": TranslatableResource[] | null;
+export class RecoveryCapabilityResult {
+    "available": boolean;
+    "simulated": boolean;
+    "message": string;
+
+    /** Creates a new RecoveryCapabilityResult instance. */
+    constructor($$source: Partial<RecoveryCapabilityResult> = {}) {
+        if (!("available" in $$source)) {
+            this["available"] = false;
+        }
+        if (!("simulated" in $$source)) {
+            this["simulated"] = false;
+        }
+        if (!("message" in $$source)) {
+            this["message"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new RecoveryCapabilityResult instance from a string or object.
+     */
+    static createFrom($$source: any = {}): RecoveryCapabilityResult {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new RecoveryCapabilityResult($$parsedSource as Partial<RecoveryCapabilityResult>);
+    }
 }
 
-export interface SimulatorEvent {
+export class ResourceInspection {
+    "Resources": TranslatableResource[];
+
+    /** Creates a new ResourceInspection instance. */
+    constructor($$source: Partial<ResourceInspection> = {}) {
+        if (!("Resources" in $$source)) {
+            this["Resources"] = [];
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new ResourceInspection instance from a string or object.
+     */
+    static createFrom($$source: any = {}): ResourceInspection {
+        const $$createField0_0 = $$createType27;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("Resources" in $$parsedSource) {
+            $$parsedSource["Resources"] = $$createField0_0($$parsedSource["Resources"]);
+        }
+        return new ResourceInspection($$parsedSource as Partial<ResourceInspection>);
+    }
+}
+
+export class SimulatorEvent {
     "at": string;
     "step": string;
     "status": string;
     "message": string;
+
+    /** Creates a new SimulatorEvent instance. */
+    constructor($$source: Partial<SimulatorEvent> = {}) {
+        if (!("at" in $$source)) {
+            this["at"] = "0001-01-01T00:00:00.000Z";
+        }
+        if (!("step" in $$source)) {
+            this["step"] = "";
+        }
+        if (!("status" in $$source)) {
+            this["status"] = "";
+        }
+        if (!("message" in $$source)) {
+            this["message"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new SimulatorEvent instance from a string or object.
+     */
+    static createFrom($$source: any = {}): SimulatorEvent {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new SimulatorEvent($$parsedSource as Partial<SimulatorEvent>);
+    }
 }
 
-export interface SimulatorProfile {
+export class SimulatorProfile {
     "id": string;
     "name": string;
     "description": string;
@@ -274,9 +1397,59 @@ export interface SimulatorProfile {
     "hardware": HardwareInfo;
     "firmware": FirmwareInfo;
     "expectedCompatibility": CompatibilityStatus;
+
+    /** Creates a new SimulatorProfile instance. */
+    constructor($$source: Partial<SimulatorProfile> = {}) {
+        if (!("id" in $$source)) {
+            this["id"] = "";
+        }
+        if (!("name" in $$source)) {
+            this["name"] = "";
+        }
+        if (!("description" in $$source)) {
+            this["description"] = "";
+        }
+        if (!("synthetic" in $$source)) {
+            this["synthetic"] = false;
+        }
+        if (!("identity" in $$source)) {
+            this["identity"] = (new VehicleIdentity());
+        }
+        if (!("hardware" in $$source)) {
+            this["hardware"] = (new HardwareInfo());
+        }
+        if (!("firmware" in $$source)) {
+            this["firmware"] = (new FirmwareInfo());
+        }
+        if (!("expectedCompatibility" in $$source)) {
+            this["expectedCompatibility"] = CompatibilityStatus.$zero;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new SimulatorProfile instance from a string or object.
+     */
+    static createFrom($$source: any = {}): SimulatorProfile {
+        const $$createField4_0 = $$createType2;
+        const $$createField5_0 = $$createType3;
+        const $$createField6_0 = $$createType4;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("identity" in $$parsedSource) {
+            $$parsedSource["identity"] = $$createField4_0($$parsedSource["identity"]);
+        }
+        if ("hardware" in $$parsedSource) {
+            $$parsedSource["hardware"] = $$createField5_0($$parsedSource["hardware"]);
+        }
+        if ("firmware" in $$parsedSource) {
+            $$parsedSource["firmware"] = $$createField6_0($$parsedSource["firmware"]);
+        }
+        return new SimulatorProfile($$parsedSource as Partial<SimulatorProfile>);
+    }
 }
 
-export interface SimulatorRunResult {
+export class SimulatorRunResult {
     "runId": string;
     "profile": SimulatorProfile;
     "adapterId"?: string;
@@ -286,7 +1459,58 @@ export interface SimulatorRunResult {
     "package": LocalizationPackage;
     "packageVerified": boolean;
     "errorMessage"?: string;
-    "events": SimulatorEvent[] | null;
+    "events": SimulatorEvent[];
+
+    /** Creates a new SimulatorRunResult instance. */
+    constructor($$source: Partial<SimulatorRunResult> = {}) {
+        if (!("runId" in $$source)) {
+            this["runId"] = "";
+        }
+        if (!("profile" in $$source)) {
+            this["profile"] = (new SimulatorProfile());
+        }
+        if (!("status" in $$source)) {
+            this["status"] = SimulatorRunStatus.$zero;
+        }
+        if (!("compatibility" in $$source)) {
+            this["compatibility"] = (new CompatibilityResult());
+        }
+        if (!("package" in $$source)) {
+            this["package"] = (new LocalizationPackage());
+        }
+        if (!("packageVerified" in $$source)) {
+            this["packageVerified"] = false;
+        }
+        if (!("events" in $$source)) {
+            this["events"] = [];
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new SimulatorRunResult instance from a string or object.
+     */
+    static createFrom($$source: any = {}): SimulatorRunResult {
+        const $$createField1_0 = $$createType28;
+        const $$createField4_0 = $$createType19;
+        const $$createField6_0 = $$createType29;
+        const $$createField9_0 = $$createType31;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("profile" in $$parsedSource) {
+            $$parsedSource["profile"] = $$createField1_0($$parsedSource["profile"]);
+        }
+        if ("compatibility" in $$parsedSource) {
+            $$parsedSource["compatibility"] = $$createField4_0($$parsedSource["compatibility"]);
+        }
+        if ("package" in $$parsedSource) {
+            $$parsedSource["package"] = $$createField6_0($$parsedSource["package"]);
+        }
+        if ("events" in $$parsedSource) {
+            $$parsedSource["events"] = $$createField9_0($$parsedSource["events"]);
+        }
+        return new SimulatorRunResult($$parsedSource as Partial<SimulatorRunResult>);
+    }
 }
 
 export enum SimulatorRunStatus {
@@ -301,9 +1525,29 @@ export enum SimulatorRunStatus {
     SimulatorRunFailed = "failed",
 };
 
-export interface TranslatableResource {
+export class TranslatableResource {
     "ID": string;
     "Text": string;
+
+    /** Creates a new TranslatableResource instance. */
+    constructor($$source: Partial<TranslatableResource> = {}) {
+        if (!("ID" in $$source)) {
+            this["ID"] = "";
+        }
+        if (!("Text" in $$source)) {
+            this["Text"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new TranslatableResource instance from a string or object.
+     */
+    static createFrom($$source: any = {}): TranslatableResource {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new TranslatableResource($$parsedSource as Partial<TranslatableResource>);
+    }
 }
 
 export enum TranslationStatus {
@@ -317,15 +1561,98 @@ export enum TranslationStatus {
     TranslationStatusNeedsReview = "needs_review",
 };
 
-export interface VehicleIdentity {
+export class VehicleIdentity {
     "Manufacturer": string;
     "Model": string;
     "PlatformID": string;
+
+    /** Creates a new VehicleIdentity instance. */
+    constructor($$source: Partial<VehicleIdentity> = {}) {
+        if (!("Manufacturer" in $$source)) {
+            this["Manufacturer"] = "";
+        }
+        if (!("Model" in $$source)) {
+            this["Model"] = "";
+        }
+        if (!("PlatformID" in $$source)) {
+            this["PlatformID"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new VehicleIdentity instance from a string or object.
+     */
+    static createFrom($$source: any = {}): VehicleIdentity {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new VehicleIdentity($$parsedSource as Partial<VehicleIdentity>);
+    }
 }
 
-export interface VehicleModel {
+export class VehicleModel {
     "ID": string;
     "ManufacturerID": string;
     "ManufacturerName": string;
     "Name": string;
+
+    /** Creates a new VehicleModel instance. */
+    constructor($$source: Partial<VehicleModel> = {}) {
+        if (!("ID" in $$source)) {
+            this["ID"] = "";
+        }
+        if (!("ManufacturerID" in $$source)) {
+            this["ManufacturerID"] = "";
+        }
+        if (!("ManufacturerName" in $$source)) {
+            this["ManufacturerName"] = "";
+        }
+        if (!("Name" in $$source)) {
+            this["Name"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new VehicleModel instance from a string or object.
+     */
+    static createFrom($$source: any = {}): VehicleModel {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new VehicleModel($$parsedSource as Partial<VehicleModel>);
+    }
 }
+
+// Private type creation functions
+const $$createType0 = AdapterCapabilities.createFrom;
+const $$createType1 = $Create.Array($Create.Any);
+const $$createType2 = VehicleIdentity.createFrom;
+const $$createType3 = HardwareInfo.createFrom;
+const $$createType4 = FirmwareInfo.createFrom;
+const $$createType5 = DeploymentPreflight.createFrom;
+const $$createType6 = DeploymentResultVerification.createFrom;
+const $$createType7 = RecoveryCapabilityResult.createFrom;
+const $$createType8 = DeploymentEvent.createFrom;
+const $$createType9 = $Create.Array($$createType8);
+const $$createType10 = DeploymentCheck.createFrom;
+const $$createType11 = $Create.Array($$createType10);
+const $$createType12 = GeelyResourceRequest.createFrom;
+const $$createType13 = $Create.Nullable($$createType12);
+const $$createType14 = LocalizationProject.createFrom;
+const $$createType15 = GeelyResearchAnalysis.createFrom;
+const $$createType16 = ResourceInspection.createFrom;
+const $$createType17 = GeelyResearchProfile.createFrom;
+const $$createType18 = DetectionResult.createFrom;
+const $$createType19 = CompatibilityResult.createFrom;
+const $$createType20 = LocalizationResource.createFrom;
+const $$createType21 = $Create.Array($$createType20);
+const $$createType22 = LocalizationTranslation.createFrom;
+const $$createType23 = $Create.Array($$createType22);
+const $$createType24 = LocalizationValidationIssue.createFrom;
+const $$createType25 = $Create.Array($$createType24);
+const $$createType26 = TranslatableResource.createFrom;
+const $$createType27 = $Create.Array($$createType26);
+const $$createType28 = SimulatorProfile.createFrom;
+const $$createType29 = LocalizationPackage.createFrom;
+const $$createType30 = SimulatorEvent.createFrom;
+const $$createType31 = $Create.Array($$createType30);

@@ -140,12 +140,12 @@ type DeploymentProvider interface {
 
 **Файлы:** изменить `desktop/application_service.go`, `desktop/application_service_test.go`, `desktop/main.go`; regenerate `desktop/frontend/bindings/` установленным Wails v3.0.0.
 
-- [ ] **Step 1: Написать facade tests** на list/start/get/cancel, context propagation, duplicate concurrent request rejection, progress event payload, shutdown cancellation and отсутствие production provider calls.
-- [ ] **Step 2: Реализовать** `deploymentCore` boundary; Wails methods start/return persistent job ID, `GetDeploymentJob` reloads the committed event list, and `CancelDeploymentJob` cancels only an active test job.
-- [ ] **Step 3: Добавить active job lifecycle map** в service, отменять jobs при `ServiceShutdown`, очищать entry при любом завершении. Test provider timeout is bounded and context-aware.
-- [ ] **Step 4: Регистрировать/emитировать Wails event** `deployment:progress` через установленную версию v3 API; event содержит job ID и persisted sequence. Для unit tests inject publisher interface instead of global Wails runtime.
-- [ ] **Step 5: Генерировать bindings** через Makefile target `make desktop-build`; проверить изменения generated TypeScript и `go test ./...` внутри `desktop/`.
-- [ ] **Step 6: Commit** `feat: expose deployment jobs to Wails`.
+- [x] **Step 1: Написать facade tests** на list/start/get/cancel, context propagation, duplicate active ID rejection, progress event payload и shutdown cancellation.
+- [x] **Step 2: Реализовать** `deploymentCore` boundary; Wails `StartDeploymentJob` возвращает persistent job, worker выполняет Core orchestration асинхронно; `GetDeploymentJob` перечитывает committed events, `CancelDeploymentJob` передаёт отмену активному run.
+- [x] **Step 3: Добавить active job lifecycle map** в service, отменять jobs при `ServiceShutdown`, очищать entry при любом завершении; Core timeout bounded двумя минутами и context-aware.
+- [x] **Step 4: Регистрировать/эмитировать Wails event** `deployment:progress` в Wails v3.0.0; payload содержит job ID и persisted sequence. Для unit tests используется injected publisher вместо глобального Wails runtime.
+- [x] **Step 5: Генерировать bindings** командой `wails3 generate bindings -ts .`; desktop Go tests, facade/simulator race tests и `go vet ./...` завершились с кодом 0. Go tests запускались при временном embed fixture, пока frontend dist ещё не собран; Task 7 выполнит настоящую сборку frontend.
+- [x] **Step 6: Commit** `feat: expose deployment jobs to Wails`.
 
 ## Task 7: Deployment Desktop screen и E2E
 

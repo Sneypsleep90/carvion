@@ -9,7 +9,7 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wailsio/runtime";
+import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Create } from "@wailsio/runtime";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -20,19 +20,33 @@ import * as domain$0 from "../internal/core/domain/models.js";
 import * as $models from "./models.js";
 
 export function AnalyzeGeelyProfile(profileJSON: string): $CancellablePromise<domain$0.GeelyResearchAnalysis> {
-    return $Call.ByID(184332056, profileJSON);
+    return $Call.ByID(184332056, profileJSON).then(($result: any) => {
+        return $$createType0($result);
+    });
 }
 
 export function ApproveLocalizationTranslation(projectID: string, resourceKey: string): $CancellablePromise<domain$0.LocalizationTranslation> {
-    return $Call.ByID(856366548, projectID, resourceKey);
+    return $Call.ByID(856366548, projectID, resourceKey).then(($result: any) => {
+        return $$createType1($result);
+    });
 }
 
 export function BuildGeelyDiagnosticReport(request: domain$0.GeelyDiagnosticReportRequest): $CancellablePromise<domain$0.GeelyDiagnosticReport> {
-    return $Call.ByID(3556549218, request);
+    return $Call.ByID(3556549218, request).then(($result: any) => {
+        return $$createType2($result);
+    });
 }
 
 export function BuildLocalizationPackage(projectID: string): $CancellablePromise<domain$0.LocalizationPackage> {
-    return $Call.ByID(778118136, projectID);
+    return $Call.ByID(778118136, projectID).then(($result: any) => {
+        return $$createType3($result);
+    });
+}
+
+export function CancelDeploymentJob(jobID: string): $CancellablePromise<domain$0.DeploymentJob> {
+    return $Call.ByID(2538501789, jobID).then(($result: any) => {
+        return $$createType4($result);
+    });
 }
 
 export function CancelSimulatorScenario(requestID: string): $CancellablePromise<boolean> {
@@ -40,89 +54,183 @@ export function CancelSimulatorScenario(requestID: string): $CancellablePromise<
 }
 
 export function CheckCompatibility(adapterID: string, request: domain$0.CompatibilityRequest): $CancellablePromise<domain$0.CompatibilityResult> {
-    return $Call.ByID(3465918495, adapterID, request);
+    return $Call.ByID(3465918495, adapterID, request).then(($result: any) => {
+        return $$createType5($result);
+    });
 }
 
 export function DetectVehicle(adapterID: string, identity: domain$0.VehicleIdentity): $CancellablePromise<domain$0.DetectionResult> {
-    return $Call.ByID(288625776, adapterID, identity);
+    return $Call.ByID(288625776, adapterID, identity).then(($result: any) => {
+        return $$createType6($result);
+    });
 }
 
 export function ExportLocalizationCSV(projectID: string): $CancellablePromise<domain$0.LocalizationArtifact> {
-    return $Call.ByID(314347272, projectID);
+    return $Call.ByID(314347272, projectID).then(($result: any) => {
+        return $$createType7($result);
+    });
 }
 
 export function ExportLocalizationResources(projectID: string): $CancellablePromise<domain$0.LocalizationArtifact> {
-    return $Call.ByID(4030860565, projectID);
+    return $Call.ByID(4030860565, projectID).then(($result: any) => {
+        return $$createType7($result);
+    });
 }
 
 export function GetApplicationState(): $CancellablePromise<$models.ApplicationState> {
-    return $Call.ByID(1987557658);
+    return $Call.ByID(1987557658).then(($result: any) => {
+        return $$createType8($result);
+    });
+}
+
+export function GetDeploymentJob(jobID: string): $CancellablePromise<domain$0.DeploymentJob> {
+    return $Call.ByID(1793264973, jobID).then(($result: any) => {
+        return $$createType4($result);
+    });
 }
 
 export function GetLocalizationProject(projectID: string): $CancellablePromise<domain$0.LocalizationProject> {
-    return $Call.ByID(2920421713, projectID);
+    return $Call.ByID(2920421713, projectID).then(($result: any) => {
+        return $$createType9($result);
+    });
 }
 
 export function ImportGeelyLocalizationProject(request: domain$0.GeelyLocalizationImportRequest): $CancellablePromise<domain$0.GeelyLocalizationImportResult> {
-    return $Call.ByID(4163734912, request);
+    return $Call.ByID(4163734912, request).then(($result: any) => {
+        return $$createType10($result);
+    });
 }
 
 export function ImportLocalizationCSV(projectID: string, content: string): $CancellablePromise<domain$0.LocalizationProject> {
-    return $Call.ByID(3192829533, projectID, content);
+    return $Call.ByID(3192829533, projectID, content).then(($result: any) => {
+        return $$createType9($result);
+    });
 }
 
 export function ImportLocalizationProject(name: string, locale: string, format: string, filename: string, content: string): $CancellablePromise<domain$0.LocalizationProject> {
-    return $Call.ByID(1519076528, name, locale, format, filename, content);
+    return $Call.ByID(1519076528, name, locale, format, filename, content).then(($result: any) => {
+        return $$createType9($result);
+    });
 }
 
 export function InspectGeelyResources(request: domain$0.GeelyResourceRequest): $CancellablePromise<domain$0.ResourceInspection> {
-    return $Call.ByID(2377997280, request);
+    return $Call.ByID(2377997280, request).then(($result: any) => {
+        return $$createType11($result);
+    });
 }
 
 export function InspectResources(adapterID: string, request: domain$0.InspectResourcesRequest): $CancellablePromise<domain$0.ResourceInspection> {
-    return $Call.ByID(3794135526, adapterID, request);
+    return $Call.ByID(3794135526, adapterID, request).then(($result: any) => {
+        return $$createType11($result);
+    });
 }
 
-export function ListAdapters(): $CancellablePromise<domain$0.AdapterInfo[] | null> {
-    return $Call.ByID(1412596575);
+export function ListAdapters(): $CancellablePromise<domain$0.AdapterInfo[]> {
+    return $Call.ByID(1412596575).then(($result: any) => {
+        return $$createType13($result);
+    });
 }
 
-export function ListGeelyResearchEvidence(): $CancellablePromise<domain$0.GeelyResearchEvidence[] | null> {
-    return $Call.ByID(373560897);
+export function ListDeploymentJobs(limit: number): $CancellablePromise<domain$0.DeploymentJobSummary[]> {
+    return $Call.ByID(897839720, limit).then(($result: any) => {
+        return $$createType15($result);
+    });
 }
 
-export function ListInfotainmentPlatforms(manufacturerID: string): $CancellablePromise<domain$0.InfotainmentPlatform[] | null> {
-    return $Call.ByID(3695902489, manufacturerID);
+export function ListGeelyResearchEvidence(): $CancellablePromise<domain$0.GeelyResearchEvidence[]> {
+    return $Call.ByID(373560897).then(($result: any) => {
+        return $$createType17($result);
+    });
 }
 
-export function ListLocalizationProjects(): $CancellablePromise<domain$0.LocalizationProjectSummary[] | null> {
-    return $Call.ByID(269602876);
+export function ListInfotainmentPlatforms(manufacturerID: string): $CancellablePromise<domain$0.InfotainmentPlatform[]> {
+    return $Call.ByID(3695902489, manufacturerID).then(($result: any) => {
+        return $$createType19($result);
+    });
 }
 
-export function ListManufacturers(): $CancellablePromise<domain$0.Manufacturer[] | null> {
-    return $Call.ByID(2903165319);
+export function ListLocalizationProjects(): $CancellablePromise<domain$0.LocalizationProjectSummary[]> {
+    return $Call.ByID(269602876).then(($result: any) => {
+        return $$createType21($result);
+    });
 }
 
-export function ListSimulatorProfiles(): $CancellablePromise<domain$0.SimulatorProfile[] | null> {
-    return $Call.ByID(1197289001);
+export function ListManufacturers(): $CancellablePromise<domain$0.Manufacturer[]> {
+    return $Call.ByID(2903165319).then(($result: any) => {
+        return $$createType23($result);
+    });
 }
 
-export function ListVehicleModels(manufacturerID: string): $CancellablePromise<domain$0.VehicleModel[] | null> {
-    return $Call.ByID(3899464795, manufacturerID);
+export function ListSimulatorProfiles(): $CancellablePromise<domain$0.SimulatorProfile[]> {
+    return $Call.ByID(1197289001).then(($result: any) => {
+        return $$createType25($result);
+    });
+}
+
+export function ListVehicleModels(manufacturerID: string): $CancellablePromise<domain$0.VehicleModel[]> {
+    return $Call.ByID(3899464795, manufacturerID).then(($result: any) => {
+        return $$createType27($result);
+    });
 }
 
 export function ReplaceLocalizationSource(projectID: string, filename: string, content: string): $CancellablePromise<domain$0.LocalizationProject> {
-    return $Call.ByID(3247450521, projectID, filename, content);
+    return $Call.ByID(3247450521, projectID, filename, content).then(($result: any) => {
+        return $$createType9($result);
+    });
 }
 
 export function RunSimulatorScenario(profileID: string, requestID: string): $CancellablePromise<domain$0.SimulatorRunResult> {
-    return $Call.ByID(4224615192, profileID, requestID);
+    return $Call.ByID(4224615192, profileID, requestID).then(($result: any) => {
+        return $$createType28($result);
+    });
+}
+
+export function StartDeploymentJob(request: domain$0.DeploymentRequest): $CancellablePromise<domain$0.DeploymentJob> {
+    return $Call.ByID(104225913, request).then(($result: any) => {
+        return $$createType4($result);
+    });
 }
 
 export function UpdateLocalizationTranslation(projectID: string, resourceKey: string, targetText: string): $CancellablePromise<domain$0.LocalizationTranslation> {
-    return $Call.ByID(3812902754, projectID, resourceKey, targetText);
+    return $Call.ByID(3812902754, projectID, resourceKey, targetText).then(($result: any) => {
+        return $$createType1($result);
+    });
 }
 
 export function ValidateLocalizationProject(projectID: string): $CancellablePromise<domain$0.LocalizationValidationReport> {
-    return $Call.ByID(2040993209, projectID);
+    return $Call.ByID(2040993209, projectID).then(($result: any) => {
+        return $$createType29($result);
+    });
 }
+
+// Private type creation functions
+const $$createType0 = domain$0.GeelyResearchAnalysis.createFrom;
+const $$createType1 = domain$0.LocalizationTranslation.createFrom;
+const $$createType2 = domain$0.GeelyDiagnosticReport.createFrom;
+const $$createType3 = domain$0.LocalizationPackage.createFrom;
+const $$createType4 = domain$0.DeploymentJob.createFrom;
+const $$createType5 = domain$0.CompatibilityResult.createFrom;
+const $$createType6 = domain$0.DetectionResult.createFrom;
+const $$createType7 = domain$0.LocalizationArtifact.createFrom;
+const $$createType8 = $models.ApplicationState.createFrom;
+const $$createType9 = domain$0.LocalizationProject.createFrom;
+const $$createType10 = domain$0.GeelyLocalizationImportResult.createFrom;
+const $$createType11 = domain$0.ResourceInspection.createFrom;
+const $$createType12 = domain$0.AdapterInfo.createFrom;
+const $$createType13 = $Create.Array($$createType12);
+const $$createType14 = domain$0.DeploymentJobSummary.createFrom;
+const $$createType15 = $Create.Array($$createType14);
+const $$createType16 = domain$0.GeelyResearchEvidence.createFrom;
+const $$createType17 = $Create.Array($$createType16);
+const $$createType18 = domain$0.InfotainmentPlatform.createFrom;
+const $$createType19 = $Create.Array($$createType18);
+const $$createType20 = domain$0.LocalizationProjectSummary.createFrom;
+const $$createType21 = $Create.Array($$createType20);
+const $$createType22 = domain$0.Manufacturer.createFrom;
+const $$createType23 = $Create.Array($$createType22);
+const $$createType24 = domain$0.SimulatorProfile.createFrom;
+const $$createType25 = $Create.Array($$createType24);
+const $$createType26 = domain$0.VehicleModel.createFrom;
+const $$createType27 = $Create.Array($$createType26);
+const $$createType28 = domain$0.SimulatorRunResult.createFrom;
+const $$createType29 = domain$0.LocalizationValidationReport.createFrom;

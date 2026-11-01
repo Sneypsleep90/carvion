@@ -5,8 +5,13 @@ import (
 	"log"
 	"os"
 
+	"github.com/Sneypsleep90/carvion/internal/core/domain"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
+
+func init() {
+	application.RegisterEvent[domain.DeploymentEvent]("deployment:progress")
+}
 
 //go:embed all:frontend/dist
 var frontendAssets embed.FS

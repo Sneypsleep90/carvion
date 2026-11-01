@@ -18,15 +18,17 @@ import (
 )
 
 const (
-	applicationVersion   = "0.1.0"
-	statusReady          = "ready"
-	statusDegraded       = "degraded"
-	statusUnavailable    = "unavailable"
-	statusUnknown        = "unknown"
-	statusConnected      = "connected"
-	statusNoAdapters     = "none"
-	statusAdaptersLoaded = "available"
-	statusCheckTimeout   = time.Second
+	applicationVersion      = "0.1.0"
+	statusReady             = "ready"
+	statusDegraded          = "degraded"
+	statusUnavailable       = "unavailable"
+	statusUnknown           = "unknown"
+	statusConnected         = "connected"
+	statusNoAdapters        = "none"
+	statusAdaptersLoaded    = "available"
+	statusCheckTimeout      = time.Second
+	deploymentProgressEvent = "deployment:progress"
+	deploymentShutdownWait  = 6 * time.Second
 )
 
 var ErrCoreUnavailable = errors.New("CARVION Core is unavailable")
@@ -60,6 +62,14 @@ type simulatorCore interface {
 	RunSimulatorScenario(context.Context, string) (domain.SimulatorRunResult, error)
 }
 
+type deploymentCore interface {
+	StartDeploymentJob(context.Context, domain.DeploymentRequest) (domain.DeploymentJob, error)
+	RunDeploymentJob(context.Context, string, application.DeploymentProgressPublisher) (domain.DeploymentJob, error)
+	CancelDeploymentJob(context.Context, string) (domain.DeploymentJob, error)
+	GetDeploymentJob(context.Context, string) (domain.DeploymentJob, error)
+	ListDeploymentJobs(context.Context, int) ([]domain.DeploymentJobSummary, error)
+}
+
 type geelyResearchCore interface {
 	ListGeelyResearchEvidence(context.Context) ([]domain.GeelyResearchEvidence, error)
 	AnalyzeGeelyProfile(context.Context, []byte) (domain.GeelyResearchAnalysis, error)
@@ -91,13 +101,16 @@ type ApplicationState struct {
 type ApplicationService struct {
 	mu sync.RWMutex
 
-	ctx           context.Context
-	core          coreService
-	runtime       managedRuntime
-	startupError  string
-	loadConfig    func() (config.Config, error)
-	startRuntime  runtimeStarter
-	simulatorRuns map[string]context.CancelFunc
+	ctx                    context.Context
+	core                   coreService
+	runtime                managedRuntime
+	startupError           string
+	loadConfig             func() (config.Config, error)
+	startRuntime           runtimeStarter
+	simulatorRuns          map[string]context.CancelFunc
+	deploymentRuns         map[string]context.CancelFunc
+	deploymentWG           sync.WaitGroup
+	emitDeploymentProgress func(domain.DeploymentEvent) error
 }
 
 func NewApplicationService() *ApplicationService {
@@ -109,6 +122,14 @@ func NewApplicationService() *ApplicationService {
 				return nil, nil, err
 			}
 			return runtime.Core, runtime, nil
+		},
+		emitDeploymentProgress: func(event domain.DeploymentEvent) error {
+			app := wailsapp.Get()
+			if app == nil {
+				return ErrCoreUnavailable
+			}
+			app.Event.Emit(deploymentProgressEvent, event)
+			return nil
 		},
 	}
 }
@@ -168,13 +189,27 @@ func (s *ApplicationService) ServiceShutdown() error {
 	s.mu.Lock()
 	runtime := s.runtime
 	simulatorRuns := s.simulatorRuns
+	deploymentRuns := s.deploymentRuns
 	s.simulatorRuns = nil
+	s.deploymentRuns = nil
 	s.runtime = nil
 	s.core = nil
 	s.ctx = nil
 	s.mu.Unlock()
 	for _, cancel := range simulatorRuns {
 		cancel()
+	}
+	for _, cancel := range deploymentRuns {
+		cancel()
+	}
+	deploymentDone := make(chan struct{})
+	go func() {
+		s.deploymentWG.Wait()
+		close(deploymentDone)
+	}()
+	select {
+	case <-deploymentDone:
+	case <-time.After(deploymentShutdownWait):
 	}
 
 	if runtime != nil {
@@ -429,6 +464,84 @@ func (s *ApplicationService) CancelSimulatorScenario(requestID string) bool {
 	return true
 }
 
+func (s *ApplicationService) StartDeploymentJob(request domain.DeploymentRequest) (domain.DeploymentJob, error) {
+	ctx, core, err := s.deploymentCoreSnapshot()
+	if err != nil {
+		return domain.DeploymentJob{}, err
+	}
+	job, err := core.StartDeploymentJob(ctx, request)
+	if err != nil {
+		return domain.DeploymentJob{}, err
+	}
+	runCtx, cancel := context.WithCancel(ctx)
+	s.mu.Lock()
+	if s.ctx == nil || s.ctx.Err() != nil {
+		s.mu.Unlock()
+		cancel()
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), deploymentShutdownWait)
+		defer cleanupCancel()
+		_, _ = core.CancelDeploymentJob(cleanupCtx, job.ID)
+		return domain.DeploymentJob{}, context.Canceled
+	}
+	if s.deploymentRuns == nil {
+		s.deploymentRuns = make(map[string]context.CancelFunc)
+	}
+	if _, exists := s.deploymentRuns[job.ID]; exists {
+		s.mu.Unlock()
+		cancel()
+		return domain.DeploymentJob{}, fmt.Errorf("%w: deployment job %q is already active", domain.ErrInvalidArgument, job.ID)
+	}
+	if s.emitDeploymentProgress == nil {
+		s.emitDeploymentProgress = func(domain.DeploymentEvent) error { return nil }
+	}
+	publish := s.emitDeploymentProgress
+	s.deploymentRuns[job.ID] = cancel
+	s.deploymentWG.Add(1)
+	s.mu.Unlock()
+
+	go func() {
+		defer s.deploymentWG.Done()
+		defer cancel()
+		defer func() {
+			s.mu.Lock()
+			delete(s.deploymentRuns, job.ID)
+			s.mu.Unlock()
+		}()
+		_, _ = core.RunDeploymentJob(runCtx, job.ID, application.DeploymentProgressPublisher(publish))
+	}()
+	return job, nil
+}
+
+func (s *ApplicationService) GetDeploymentJob(jobID string) (domain.DeploymentJob, error) {
+	ctx, core, err := s.deploymentCoreSnapshot()
+	if err != nil {
+		return domain.DeploymentJob{}, err
+	}
+	return core.GetDeploymentJob(ctx, jobID)
+}
+
+func (s *ApplicationService) ListDeploymentJobs(limit int) ([]domain.DeploymentJobSummary, error) {
+	ctx, core, err := s.deploymentCoreSnapshot()
+	if err != nil {
+		return nil, err
+	}
+	return core.ListDeploymentJobs(ctx, limit)
+}
+
+func (s *ApplicationService) CancelDeploymentJob(jobID string) (domain.DeploymentJob, error) {
+	ctx, core, err := s.deploymentCoreSnapshot()
+	if err != nil {
+		return domain.DeploymentJob{}, err
+	}
+	s.mu.RLock()
+	cancel := s.deploymentRuns[jobID]
+	s.mu.RUnlock()
+	if cancel != nil {
+		cancel()
+	}
+	return core.CancelDeploymentJob(ctx, jobID)
+}
+
 func (s *ApplicationService) ListGeelyResearchEvidence() ([]domain.GeelyResearchEvidence, error) {
 	ctx, core, err := s.geelyResearchCoreSnapshot()
 	if err != nil {
@@ -506,6 +619,18 @@ func (s *ApplicationService) simulatorCoreSnapshot() (context.Context, simulator
 		return nil, nil, fmt.Errorf("%w: simulator service is unavailable", ErrCoreUnavailable)
 	}
 	return ctx, simulator, nil
+}
+
+func (s *ApplicationService) deploymentCoreSnapshot() (context.Context, deploymentCore, error) {
+	ctx, core, err := s.coreSnapshot()
+	if err != nil {
+		return nil, nil, err
+	}
+	deployment, ok := core.(deploymentCore)
+	if !ok {
+		return nil, nil, fmt.Errorf("%w: deployment engine is unavailable", ErrCoreUnavailable)
+	}
+	return ctx, deployment, nil
 }
 
 func (s *ApplicationService) geelyResearchCoreSnapshot() (context.Context, geelyResearchCore, error) {
