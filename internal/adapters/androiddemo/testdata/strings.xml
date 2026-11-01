@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CARVION Demo</string>
+    <string name="welcome_message">Welcome &amp; explore</string>
+    <string name="debug_label" translatable="false">debug</string>
+</resources>

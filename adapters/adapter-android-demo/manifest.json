@@ -1,0 +1,13 @@
+{
+  "manifest_version": 1,
+  "api_version": "v1",
+  "id": "adapter-android-demo",
+  "name": "CARVION Synthetic Android Demo",
+  "version": "0.1.0",
+  "executable": "bin/adapter-android-demo",
+  "capabilities": {
+    "detect": true,
+    "check_compatibility": true,
+    "inspect_resources": true
+  }
+}

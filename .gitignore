@@ -1,0 +1,7 @@
+.env
+.idea/
+/bin/
+/carvion-api
+/adapters/adapter-android-demo/bin/
+*.test
+coverage.out

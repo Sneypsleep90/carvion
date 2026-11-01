@@ -1,0 +1,16 @@
+{
+  "profiles": [
+    {
+      "identity": {
+        "manufacturer": "CARVION TEST LAB",
+        "model": "Android Demo Unit",
+        "platform_id": "android-demo-platform"
+      },
+      "platform_id": "android-demo-platform",
+      "hardware_revision": "rev-a",
+      "firmware_build_id": "demo-build-a-001",
+      "firmware_version": "1.0.0-demo",
+      "status": "supported"
+    }
+  ]
+}
